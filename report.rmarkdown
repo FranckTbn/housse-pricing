@@ -1,0 +1,1397 @@
+---
+title: "Stage: Projet 1"
+title-block-banner: true
+subtitle: "House Prices - Advanced Regression Techniques"
+date: last-modified
+author: 
+  - name: Tra Bi Nene Othniel
+  - email: bineneothniel.tra@linkpact.fr
+  - url: 
+keywords: 
+  - R for data-science
+  - regression techniques
+  - machine learning
+format: 
+  html:
+    
+    toc: true
+    toc-depth: 3
+    toc-expand: 1
+    toc-location: left
+    toc-title: "table des matières"
+    grid:
+      sidebar-width: 230px
+      body-width: 950px
+      margin-width: 100px
+      gutter-width: 1.5em
+    number-sections: true
+    number-depth: 3
+    smooth-scroll: true
+    code-fold: false
+    code-block-border-left: true
+    code-summary: "montrer"
+    html-math-method: katex
+    anchor-sections: false
+    other-links:
+        
+      - icon: box-arrow-up-right
+        text: kaggle
+        href: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
+theme:
+   
+    light: lumen
+    dark: cyborg
+      
+editor: visual
+column: page-inset-right
+anchor-sections: true
+smooth-scroll: true
+html-math-method: katex
+code-annotations: hover
+code-link: true
+lightbox: true
+css: style.css
+echo: false
+execute: 
+  freeze: auto
+  error: false
+  warning: false
+eval: true
+comments:
+  hypothesis: 
+    theme: clean
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r}
+#| label: setup
+#| include: false
+#| file: fonctions.R
+
+#library(ggridges) 
+library(DataExplorer)
+library(naniar)
+library(tidyverse)
+library(gt)
+library(ggplot2)
+library(labelled)
+
+library(xgboost)
+
+
+
+```
+
+```{r}
+train <- read.csv("data/train.csv", na.strings = "NA")
+test <- read.csv("data/test.csv", na.strings = "NA")
+
+
+Y <- train$SalePrice
+
+label <- train$SalePrice
+Id <- test$Id
+
+a <- train %>% 
+  select(-SalePrice) %>%
+  mutate( type = "train")
+
+b <- test %>%
+  mutate( type = "test")
+
+
+data <- bind_rows(a, b)
+
+
+inputed_data <- read.csv("inputed_data.csv", na.strings = "NA")
+
+
+
+
+train <- inputed_data[1:nrow(train), ]
+
+train$SalePrice = label
+
+test <- inputed_data[(nrow(train) + 1):nrow(data), ]
+
+```
+
+
+# Importation des données
+
+
+```{r}
+#| code-fold: show 
+cat("Dimensions (rows x columns): (", dim(train)[1], " x ", dim(train)[2], ")\n\n")
+
+```
+
+```{r}
+train %>%
+  slice_head(n = 3) %>%
+  gt_trabi() %>%
+  tab_source_note(md("Source : kaggle"))
+
+```
+
+
+-   **Reading the text file line by line**
+
+``` r
+lines <- readLines("data/data_description.txt")
+cat(lines, sep = "\n")
+```
+
+::: {.callout-caution title="basic information about train data" collapse="true"}
+
+```{r}
+data_information(train)
+
+```
+
+:::
+
+::: {.callout-caution title="basic information about test data" collapse="true"}
+
+```{r}
+data_information(test)
+
+```
+
+:::
+
+
+```{r}
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "missing"
+#| fig-subcap: 
+#|   - "train"
+#|   - "test"
+
+missing_variables(train)
+missing_variables(test)
+```
+
+```{r}
+#| echo: false
+#| layout-ncol: 2
+#| fig-cap: "missing"
+#| fig-subcap: 
+#|   - "train"
+#|   - "test"
+
+missing_loliplot(train)
+missing_loliplot(test)
+```
+
+```{r}
+#| fig-cap: "missing"
+#| fig-subcap: 
+#|   - "train"
+#|   - "test"
+#| layout-nrow: 2
+#| layout-ncol: 2
+
+missing_heatmap(train)
+missing_heatmap(test)
+```
+
+
+on observe que certaines variables ont des valeurs manquantes qui sont liées
+
+-   **79 variables explicatives**
+
+-   **répartition des types de variables**
+
+
+```{r}
+#| fig-cap: "type de variable"
+#| fig-subcap: 
+#|   - "train"
+#|   - "test"
+#| layout-nrow: 2
+#| layout-ncol: 2
+
+var_type_viz_1(train)
+var_type_viz_1(test)
+```
+
+
+# exploration des données via l'application shiny
+
+# Visualisation des données
+
+## Variable cible (SalePrice)
+
+
+```{r}
+summary(train$SalePrice)
+```
+
+```{r}
+
+var_quanti_viz_3(data = train, SalePrice)
+```
+
+```{r}
+# Segmenter la variable SalePrice en intervalles de 1e+5 
+train$sales_cut <- cut(train$SalePrice, breaks = seq(0, max(train$SalePrice, na.rm = TRUE) + 1e+5, by = 1e+5), labels = FALSE)*1e+5
+
+train$sales_cut <- as.factor(train$sales_cut)
+ggplot(data = train, mapping = aes( x = sales_cut))+
+  geom_bar()
+
+train <- train %>% select(- sales_cut)
+
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = SalePrice)
+```
+
+
+## exemple de Variables qualitatives
+
+### MSSubClass
+
+
+```{r}
+#| echo: false
+a <- train %>% 
+  distinct(MSSubClass) %>%
+  nrow()
+print(paste("il y a", a, "modalités"))
+```
+
+
+#### distribution
+
+
+```{r}
+train$MSSubClass <- as.character(train$MSSubClass)
+
+var_quali_viz_2(data = train, var = MSSubClass)
+```
+
+
+#### lien avec la variable cible
+
+
+```{r}
+#| column: screen-inset-shaded
+#| layout:  "[[1,1], [1]]"
+
+var_cible_quali_1(data = train, var = MSSubClass)
+
+var_cible_quali_3(data = train, var = MSSubClass)
+
+var_cible_quali_2(data = train, var = MSSubClass)
+
+```
+
+
+## exemple de Variables quantitatives
+
+### LotFrontage
+
+
+```{r}
+summary(train$LotArea)
+```
+
+```{r}
+missing_viz_1(data = train, class = LotFrontage)
+```
+
+```{r}
+
+var_quanti_viz_3(data = train, LotFrontage)
+```
+
+```{r}
+var_quanti_viz_1(data = train, var = LotFrontage)
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = LotFrontage)
+```
+
+```{r}
+var_cible_quanti(data = train, var = LotFrontage)
+```
+
+```{r}
+download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphics-with-plotly.html")
+```
+
+
+# model
+
+
+```{r}
+train <- inputed_data[1:nrow(train), ]
+
+train$SalePrice = label
+
+test <- inputed_data[(nrow(train) + 1):nrow(data), ]
+```
+
+
+-   **Surface habitable (GrLivArea)** : La taille de l'espace de vie au-dessus du sol.
+
+-   **Nombre de chambres (BedroomAbvGr)** : Le nombre de chambres au-dessus du sol.
+
+-   **Nombre de salles de bains (FullBath, HalfBath)** : Le nombre de salles de bains complètes et demi-salles de bains.
+
+-   **Année de construction (YearBuilt)** : L'année de construction de la maison.
+
+-   **Année de rénovation (YearRemodAdd)** : L'année de la dernière rénovation ou ajout.
+
+-   **Qualité globale (OverallQual)** : Une évaluation de la qualité globale des matériaux et de la finition de la maison.
+
+-   **Condition globale (OverallCond)** : Une évaluation de l'état général de la maison.
+
+-   **Nombre de garages (GarageCars)** : Le nombre de places de garage.
+
+-   **Surface du garage (GarageArea)** : La taille du garage en pieds carrés.
+
+-   **Sous-sol (TotalBsmtSF)** : La surface totale du sous-sol.
+
+### 2. **Caractéristiques du Terrain :**
+
+-   **Surface du terrain (LotArea)** : La taille du terrain en pieds carrés.
+
+-   **Forme du terrain (LotShape)** : La forme du terrain (régulière, irrégulière, etc.).
+
+-   **Type de zonage (Zoning)** : Le type de zonage résidentiel.
+
+### 3. **Emplacement :**
+
+-   **Quartier (Neighborhood)** : Le quartier où se trouve la maison.
+
+-   **Proximité des services (Condition1, Condition2)** : La proximité des divers services et commodités (écoles, parcs, centres commerciaux, etc.).
+
+-   **Qualité des écoles locales** : La qualité des écoles dans la zone (souvent prise en compte par un score ou une évaluation).
+
+### 4. **Caractéristiques Extérieures :**
+
+-   **Type de façade (Exterior1st, Exterior2nd)** : Le type de matériau de façade extérieur.
+
+-   **Matériaux de toiture (RoofMatl)** : Le matériau de la toiture.
+
+-   **Type de fondation (Foundation)** : Le type de fondation (béton, bois, etc.).
+
+### 5. **Caractéristiques Intérieures :**
+
+-   **Type de chauffage (Heating)** : Le type de système de chauffage.
+
+-   **Type de climatisation (CentralAir)** : Si la maison dispose de la climatisation centrale.
+
+-   **Qualité de la cuisine (KitchenQual)** : Une évaluation de la qualité de la cuisine.
+
+### 6. **Autres Variables :**
+
+
+
+
+
+```{r}
+modele_1 = lm(SalePrice ~ LotArea, data = train)
+summary(modele_1)
+plot.res=function(x,y,titre="")
+{
+plot(x,y,col="blue",ylab="Résidus",
+xlab="Valeurs predites",main=titre)
+abline(h=0,col="green")
+}
+plot.res(predict(modele_1),residuals(modele_1))
+```
+
+
+-   **Residual standard error** : représente l'écart type des résidus, une mesure de la dispersion des observations autour de la ligne de régression.
+
+-   **Multiple R-squared** : variabilité expliquée
+
+-   Adjusted R-squared : Ajusté pour le nombre de variables explicatives dans le modèle.
+
+-   F-statistic : teste l'hypothèse nulle que tous les coefficients sont égaux à zéro (sauf l'intercept). La p-value associée (\<2.2e-16) montre que le modèle dans son ensemble est significatif.
+
+# métrique d'évaluation (modèle le plus simple)
+
+
+```{r}
+files <- data.frame(
+  Id = test$Id,
+  SalePrice = rep(mean(train$SalePrice), nrow(test))
+  )
+
+# write.csv(data, file = "output.csv", row.names = FALSE)
+
+files %>% head(6)
+```
+
+
+le modèle le plus simple (modèle à 1 paramètre) a comme score **0.42577**
+
+on regroupe les données de train et test pour éffectuer les mêmes modifications
+
+``` r
+Y <- train$SalePrice
+
+label <- train$SalePrice
+Id <- test$Id
+
+data <- bind_rows( train %>% select(-SalePrice), test)
+```
+
+la colonne `Id` n’est pas nécessaire pour la formation du modèle.
+
+
+```{r}
+data <- data %>% 
+  select( -Id)
+```
+
+
+# traitement de données
+
+## trop de données manquantes
+
+
+```{r}
+data <- data %>% 
+    select( -c(MiscVal, PoolArea)) 
+```
+
+
+## variable avec une modalité dominante dépassant 97%
+
+
+```{r}
+ data <- data %>% 
+  select( -c(Utilities, Condition2, RoofMatl, Heating))
+```
+
+
+## Convertir les variables à étiquettes en chaîne de charactère
+
+
+```{r}
+data$MSSubClass <- as.character(data$MSSubClass)
+data$OverallQual <- as.character(data$OverallQual)
+data$OverallCond <- as.character(data$OverallCond)
+
+data$Fireplaces <- as.character(data$Fireplaces)
+data$GarageCars <- as.character(data$GarageCars)
+data$BsmtFullBath <- as.character(data$BsmtFullBath)
+data$BsmtHalfBath <- as.character(data$BsmtHalfBath)
+
+data$FullBath <- as.character(data$FullBath)
+
+data$HalfBath <- as.character(data$HalfBath)
+data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
+data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
+
+
+data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
+
+data$YrSold <- as.character(data$YrSold)
+data$MoSold <- as.character(data$MoSold)
+```
+
+
+### création de novelles variables
+
+
+```{r}
+# housse_age
+data <- data %>%
+  mutate(housse_age = 2011 - YearBuilt) %>%
+  select(-YearBuilt)
+
+data <- data %>%
+  mutate(housse_age = case_when(
+    0 <= housse_age & housse_age <= 10 ~ "1",
+    10 < housse_age & housse_age <= 20 ~ "2",
+    20 < housse_age & housse_age <= 30 ~ "3",
+    30 < housse_age & housse_age <= 40 ~ "4",
+    40 < housse_age & housse_age <= 65 ~ "5",
+    65 < housse_age & housse_age <= 80 ~ "6",
+    80 < housse_age  ~ ">80"
+  ))
+
+
+
+# garage_age
+data <- data %>%
+  mutate(garage_age = 2011 - GarageYrBlt) %>%
+  select(-GarageYrBlt)
+
+data <- data %>%
+  mutate(garage_age = case_when(
+    is.na(garage_age) ~ "No_Garage",
+    0 <= garage_age & garage_age <= 10 ~ "1",
+    10 < garage_age & garage_age <= 20 ~ "2",
+    20 < garage_age & garage_age <= 30 ~ "3",
+    30 < garage_age & garage_age <= 40 ~ "4",
+    40 < garage_age & garage_age <= 50 ~ "5",
+    50 < garage_age & garage_age <= 60 ~ "6",
+    60 < garage_age  ~ ">60"
+  ))
+
+
+# remod_since
+data <- data %>%
+  mutate(remod_since = 2011 - YearRemodAdd) %>%
+  select(-YearRemodAdd)
+
+data <- data %>%
+  mutate(remod_since = case_when(
+    0 <= remod_since & remod_since <= 10 ~ "1",
+    10 <= remod_since & remod_since <= 20 ~ "1",
+    20 < remod_since & remod_since <= 40 ~ "2",
+    40 < remod_since & remod_since <= 60 ~ "3",
+    60 < remod_since  ~ ">60"
+  ))
+
+
+```
+
+```{r}
+data <- bind_rows(a, b)
+```
+
+```{r}
+
+ggplot(data, aes( x = MSSubClass, fill = type) ) +
+  geom_bar( position = "fill" )
+```
+
+
+## discretisation des variables numériques
+
+
+```{r}
+
+# MasVnrArea
+data <- data %>%
+  mutate(MasVnrArea = case_when(
+    is.na(MasVnrArea) ~ "None",
+    MasVnrArea == 0 ~ "None",
+    0 <= MasVnrArea & MasVnrArea <= 250 ~ "1",
+    250 < MasVnrArea & MasVnrArea <= 500 ~ "2",
+    500 < MasVnrArea  ~ ">500"
+  ))
+
+
+# GarageArea
+data <- data %>%
+  mutate(GarageArea = case_when(
+    is.na(GarageArea) ~ "No.Garage",
+    0 <= GarageArea & GarageArea <= 400 ~ "1",
+    400 < GarageArea & GarageArea <= 600 ~ "2",
+    600 < GarageArea & GarageArea <= 800 ~ "3",
+    800 < GarageArea  ~ ">800"
+  ))
+
+
+# X1stFlrSF
+
+data <- data %>%
+  mutate(X1stFlrSF = case_when(
+    is.na(X1stFlrSF) ~ "No.Garage",
+    0 <= X1stFlrSF & X1stFlrSF <= 750 ~ "1",
+    750 < X1stFlrSF & X1stFlrSF <= 1000 ~ "2",
+    1000 < X1stFlrSF & X1stFlrSF <= 1250 ~ "3",
+    1250 < X1stFlrSF & X1stFlrSF <= 1500 ~ "4",
+    1500 < X1stFlrSF & X1stFlrSF <= 2000 ~ "5",
+    2000 < X1stFlrSF  ~ ">2000"
+  ))
+
+
+
+
+# TotalBsmtSF
+data <- data %>%
+  mutate(TotalBsmtSF = case_when(
+    TotalBsmtSF == 0 ~ "No.Basement",
+    0 < TotalBsmtSF & TotalBsmtSF <= 300 ~ "1",
+    300 <= TotalBsmtSF & TotalBsmtSF <= 600 ~ "2",
+    600 < TotalBsmtSF & TotalBsmtSF <= 900 ~ "3",
+    900 < TotalBsmtSF & TotalBsmtSF <= 1200 ~ "4",
+    1200 < TotalBsmtSF & TotalBsmtSF <= 1500 ~ "5",
+    1500 < TotalBsmtSF  ~ ">1500"
+  ))
+
+
+
+
+# BsmtFinSF1
+data <- data %>%
+  mutate(BsmtFinSF1 = case_when(
+    BsmtFinSF1 == 0 ~ "No.Basement",
+    0 < BsmtFinSF1 & BsmtFinSF1 <= 250 ~ "1",
+    250 <= BsmtFinSF1 & BsmtFinSF1 <= 500 ~ "2",
+    500 < BsmtFinSF1 & BsmtFinSF1 <= 750 ~ "3",
+    750 < BsmtFinSF1 & BsmtFinSF1 <= 1000 ~ "4",
+    1000 < BsmtFinSF1 & BsmtFinSF1 <= 1500 ~ "5",
+    1500 < BsmtFinSF1  ~ ">1500"
+  ))
+
+
+
+
+# BsmtUnfSF
+data <- data %>%
+  mutate(BsmtUnfSF = case_when(
+    BsmtUnfSF == 0 ~ "No.Basement",
+    0 < BsmtUnfSF & BsmtUnfSF <= 500 ~ "1",
+    500 < BsmtUnfSF & BsmtUnfSF <= 1000 ~ "2",
+    1000 < BsmtUnfSF   ~ ">1000"
+  ))
+
+
+
+# LotArea
+data <- data %>%
+  mutate(LotArea = case_when(
+    0 <= LotArea & LotArea <= 2000 ~ "1",
+    2000 < LotArea & LotArea <= 4000 ~ "2",
+    4000 < LotArea & LotArea <= 6000 ~ "3",
+    6000 < LotArea & LotArea <= 8000 ~ "4",
+    8000 < LotArea & LotArea <= 10000 ~ "5",
+    10000 < LotArea & LotArea <= 12000 ~ "6",
+    12000 < LotArea & LotArea <= 14000 ~ "7",
+    14000 < LotArea & LotArea <= 16000 ~ "8",
+    16000 < LotArea & LotArea <= 18000 ~ "9",
+    18000 < LotArea & LotArea <= 20000 ~ "10",
+    20000 < LotArea & LotArea <= 25000 ~ "11",
+    
+    
+    25000 < LotArea & LotArea <= 50000 ~ "12",
+    50000 < LotArea  ~ ">50000",
+  ))
+
+
+
+
+# GrLivArea
+data <- data %>%
+  mutate(GrLivArea = case_when(
+    0 <= GrLivArea & GrLivArea <= 700 ~ "1",
+    700 < GrLivArea & GrLivArea <= 1000 ~ "2",
+    1000 < GrLivArea & GrLivArea <= 1300 ~ "3",
+    1300 < GrLivArea & GrLivArea <= 1600 ~ "4",
+    1600 < GrLivArea & GrLivArea <= 1800 ~ "5",
+    1800 < GrLivArea & GrLivArea <= 2100 ~ "6",
+    2100 < GrLivArea & GrLivArea <= 2800 ~ "7",
+    2800 < GrLivArea  ~ ">2800",
+  ))
+
+
+
+
+# X2ndFlrSF
+data <- data %>%
+  mutate(X2ndFlrSF = case_when(
+    X2ndFlrSF == 0 ~ "No_2nd_floor",
+    0 < X2ndFlrSF & X2ndFlrSF <= 500 ~ "0-500",
+    500 < X2ndFlrSF & X2ndFlrSF <= 1000 ~ "500-1000",
+    1000 < X2ndFlrSF & X2ndFlrSF <= 1500 ~ "1000-1500",
+    1500 < X2ndFlrSF  ~ ">1500",
+  ))
+
+
+
+
+# WoodDeckSF
+data <- data %>%
+  mutate(WoodDeckSF = case_when(
+    WoodDeckSF == 0 ~ "No_WoodDeckSF",
+    0 < WoodDeckSF & WoodDeckSF <= 200 ~ "0-200",
+    200 < WoodDeckSF  ~ ">200",
+  ))
+
+
+```
+
+
+### encore une discrétisation de variable numérique \[Yes, No \]
+
+
+```{r}
+data <- data %>%
+  mutate( OpenPorchSF = ifelse(OpenPorchSF == 0, "No", "Yes"),
+          EnclosedPorch = ifelse(EnclosedPorch == 0, "No", "Yes"),
+          X3SsnPorch =  ifelse(X3SsnPorch == 0, "No", "Yes"),
+          ScreenPorch = ifelse(ScreenPorch == 0, "No", "Yes"),
+          LowQualFinSF = ifelse(LowQualFinSF == 0, "No", "Yes"),
+          BsmtFinSF2 = ifelse(BsmtFinSF2 == 0, "No", "Yes")
+          )
+```
+
+
+## Mising value
+
+
+```{r}
+#| layout-nrow: 2
+#| layout-ncol: 2
+
+
+missing_loliplot(data)
+
+missing_variables(data)
+```
+
+```{r}
+#| layout-nrow: 2
+#| layout-ncol: 2
+
+
+# gg_miss_case(train)
+hist(n_miss_row(train), xlab = "", main =  "Histograme du nombre de valeurs manquantes par ligne")
+
+missing_heatmap(train)
+```
+
+
+#### on remplace les NA par leur description dans le fichier text
+
+
+```{r}
+
+data <- data %>%
+  mutate(
+    Alley = ifelse(is.na(Alley), "No.alley.access", Alley),
+    
+    BsmtQual = ifelse(is.na(BsmtQual), "No.Basement", BsmtQual),
+    BsmtCond = ifelse(is.na(BsmtCond), "No.Basement", BsmtCond),
+    BsmtExposure = ifelse(is.na(BsmtExposure), "No.Basement", BsmtExposure),
+    BsmtFinType1 = ifelse(is.na(BsmtFinType1), "No.Basement", BsmtFinType1),
+    BsmtFinType2 = ifelse(is.na(BsmtFinType2), "No.Basement", BsmtFinType2),
+    
+    MiscFeature = ifelse(is.na(MiscFeature), "None", "Yes"),
+    Fence = ifelse(is.na(Fence), "None", Fence),
+    FireplaceQu = ifelse(is.na(FireplaceQu), "No.Fireplace", FireplaceQu),
+    
+    GarageType = ifelse(is.na(GarageType), "No.Garage", GarageType),
+    GarageFinish = ifelse(is.na(GarageFinish), "No.Garage", GarageFinish),
+    GarageQual = ifelse(is.na(GarageQual), "No.Garage", GarageQual),
+    GarageCond = ifelse(is.na(GarageCond), "No.Garage", GarageCond),
+
+    PoolQC = ifelse(is.na(PoolQC), "No.Pool", "Yes")
+  )%>%
+  select(- PoolQC)
+```
+
+
+#### Missforest for other NA input
+
+Missforest permet d'imputer les valeurs manquantes dans les jeux de données de type **mixte** en utilisant les **forêts aléatoires** pour prédire les valeurs manquantes de manière itérative et non paramétrique, en tirant parti des relations entre les variables.
+
+missForest surpasse les autres méthodes d'imputation, en particulier dans les contextes de données où des interactions complexes et des relations non linéaires sont suspectées.
+
+![](images/clipboard-4011442430.png)
+
+je prépare mes données pour l'algorithme
+
+
+```{r}
+# Transformer toutes les colonnes de type caractère en facteur
+data <- data %>%
+  mutate(across(where(is.character), as.factor)) %>%
+  mutate(across(where(is.integer), as.numeric))
+         
+var_type_viz_1(data)
+
+```
+
+```{r}
+library(missForest)
+
+data.imp <- missForest(data, verbose = TRUE, maxiter = 4, ntree = 30, replace = FALSE)
+```
+
+```{r}
+colSums(is.na(data.imp$ximp))
+```
+
+```{r}
+write.csv(data.imp$ximp, file = "inputed_data.csv", row.names = FALSE)
+```
+
+```{r}
+inputed_data <- read.csv("inputed_data.csv", na.strings = "NA")
+```
+
+```{r}
+var_type_viz_1(inputed_data)
+```
+
+```{r}
+a <- inputed_data$LotFrontage
+inputed_data$LotFrontage <- NULL
+
+inputed_data <- inputed_data %>%
+  mutate(across(where(is.numeric), as.factor)) %>%
+  mutate(across(where(is.integer), as.factor)) %>%
+  mutate(across(where(is.character), as.factor))
+
+inputed_data$LotFrontage <- a
+```
+
+```{r}
+var_type_viz_1(inputed_data)
+```
+
+```{r}
+summary(inputed_data )
+```
+
+```{r}
+
+inputed_data$LotFrontage <- a
+
+train <- inputed_data[1:nrow(train), ]
+
+train$SalePrice = label
+
+test <- inputed_data[(nrow(train) + 1):nrow(data), ]
+
+```
+
+```{r}
+iris["Species"]
+```
+
+```{r}
+dim(train)
+```
+
+```{r}
+for ( a in  names(train[-72, -73])    ) {
+  if ( !( length( unique(train[a]) ) == length(unique(test[a])  ) ) ) {
+      print(a)
+  }
+}
+```
+
+```{r}
+modlin = lm(SalePrice ~ ., data = train)
+summary(modlin) # noter les p-valeurs
+
+
+plot.res=function(x,y,titre="")
+{
+plot(x,y,col="blue",ylab="Résidus",
+xlab="Valeurs predites",main=titre)
+abline(h=0, col="green")
+}
+
+
+#Residus
+res=residuals(modlin)
+#Regroupement des graphiques sur la meme page
+par(mfrow=c(1,2))
+
+hist(residuals(modlin))
+
+
+qqnorm(res)
+qqline(res, col = 2)
+
+
+# retour au graphique standard
+par(mfrow=c(1,1))
+plot.res(predict(modlin),res)
+```
+
+```{r}
+
+levels(train$MSSubClass) 
+```
+
+```{r}
+test <- test %>%
+  mutate( MSSubClass = ifelse(MSSubClass == 150, NA, MSSubClass))
+
+levels(test$MSSubClass) 
+```
+
+```{r}
+ library(missForest)
+
+
+
+test.mod <- missForest(test, verbose = TRUE, maxiter = 4, ntree = 30, replace = FALSE)
+
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(modlin, test)
+  )
+
+write.csv(output, file = "data_AIC.csv", row.names = FALSE)
+
+```
+
+
+# Nouvelle paramétrisation
+
+Afin de faciliter l’interprétation des résultats concernant les variables qualitatives, on introduit une nouvelle paramétrisation à l’aide de contrastes.
+
+
+```{r}
+
+
+contrasts(train$housse_age) <- contr.sum(levels(train$housse_age))
+
+
+modlin2 = lm(SalePrice ~ ., data = train)
+
+summary(modlin2)
+```
+
+```{r}
+#  Erreur d’apprentissage
+mean(residuals(modlin2)**2)
+```
+
+
+## Sélection de modèle par sélection de variables
+
+# Sélection par AIC et backward
+
+Akaike Information Criterion (AIC) L'AIC est un critère utilisé pour comparer différents modèles de régression et choisir celui qui offre le meilleur équilibre entre qualité d'ajustement et complexité du modèle. Il est défini comme suit :
+
+$$ AIC = 2k - 2ln(L)$$
+
+où : - $k$ est le nombre de paramètres du modèle. - $k$ est la vraisemblance maximale du modèle.
+
+Utilisation de l'AIC dans les modèles linéaires Lors de l'ajustement de modèles linéaires, l'AIC peut être utilisé pour sélectionner les variables explicatives qui rendent le modèle le plus efficace. Un modèle avec un AIC plus bas est préféré, car il suggère un bon compromis entre une faible erreur de prédiction et une faible complexité.
+
+
+```{r}
+library(MASS)
+
+modselect_b <- stepAIC(modlin2, ~. , trace=TRUE, direction = c("backward")) 
+
+summary(modselect_b)
+```
+
+```{r}
+train %>% distinct(FullBath)
+
+
+test %>% distinct(FullBath)
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(modselect_b, test)
+  )
+
+write.csv(output, file = "data_AIC.csv", row.names = FALSE)
+
+```
+
+
+## One-Hot Encoding
+
+convertit chaque catégorie unique en une colonne binaire.
+
+
+```{r}
+library(fastDummies)
+
+data_onehot <- dummy_cols(inputed_data, remove_first_dummy = TRUE, remove_selected_columns = TRUE)
+```
+
+
+-   *remove_first_dummy = TRUE*: éviter la multicolinéarité
+-   *remove_selected_columns = TRUE*: Supprime les colonnes originales après l'encodage one-hot.
+
+
+```{r}
+data_onehot %>% head(3) %>% gt_trabi()
+```
+
+```{r}
+library(janitor)
+data_onehot <- clean_names(data_onehot)
+
+```
+
+
+# colinéarité
+
+
+```{r}
+cor_matrix <- cor(data_onehot, method = "pearson")
+high_cor_threshold <- 0.8
+
+# Find pairs of highly correlated variables
+high_cor_pairs <- which(abs(cor_matrix) > high_cor_threshold & abs(cor_matrix) < 1, arr.ind = TRUE)
+
+# Display highly correlated variable pairs
+todrop <- high_cor_pairs %>% 
+  data.frame() %>%
+  rownames_to_column("variables")
+
+data_fram <- data.frame(x = "1", y = "2")
+
+for (i in todrop$row){
+  for (j in todrop$col){
+    if ( i == j) {
+var_1 <- todrop %>% filter(row == i) %>% select(variables) %>% pull 
+var_2 <- todrop %>% filter(col == j) %>% select(variables) %>% pull 
+c_row <- c(var_1, var_2)
+data_fram <- rbind(data_fram, c_row )
+        
+    }
+  }
+}
+
+data_fram %>% distinct()
+```
+
+
+# un igraph des variables corrélées
+
+
+```{r}
+library(dplyr)
+library(igraph)
+
+cor_matrix <- cor(mtcars)
+threshold <- 0.9
+
+is_symmetric <- function(matrix) {
+  return(identical(matrix, t(matrix)))
+}
+
+is_symmetric(cor_matrix)
+
+adj_matrix <- abs(cor_matrix) > threshold
+
+# Remove self-loops (diagonal elements)
+diag(adj_matrix) <- 0
+
+is_symmetric(adj_matrix)
+
+# Create a graph from the adjacency matrix
+cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
+plot(cor_graph)
+
+# Identify connected components
+components <- clusters(cor_graph)
+
+# Extract the membership vector indicating component membership for each variable
+membership <- components$membership
+
+# Create a data frame to list the variables in each connected component
+connected_vars <- data.frame(variable = names(membership), component = membership)
+
+# Group and print the connected variables
+connected_groups <- connected_vars %>%
+  group_by(component) %>%
+  summarise(variables = paste(variable, collapse = ", "))
+
+# Print the connected groups
+print(connected_groups)
+
+```
+
+
+# Re-diviser les données
+
+
+```{r}
+train <- data_onehot[1:nrow(train), ]
+train$SalePrice = label
+test <- data_onehot[(nrow(train) + 1):nrow(data), ]
+train %>% head(6) 
+```
+
+
+# Méthodes de sélection de modèles
+
+Pour sélectionner automatiquement la meilleure combinaison de variables prédictives pour construire un modèle prédictif optimal. Il s’agit notamment des meilleures méthodes de sélection de sous-ensembles, de la régression par étapes et de la régression pénalisée (modèles de régression en crête, en lasso et en filet élastique). Nous présentons également des méthodes de régression basées sur les composantes principales, qui sont utiles lorsque les données contiennent plusieurs variables prédictives corrélées.
+
+# (repeated) k-fold cross-validation
+
+La méthode de validation croisée k-fold évalue la performance du modèle sur différents sous-ensembles de données d’entraînement, puis calcule le taux d’erreur de prédiction moyen.
+
+L’algorithme est le suivant :
+
+1.  Diviser aléatoirement l’ensemble de données en k-sous-ensembles (ou k-fold) (par exemple 5 sous-ensembles)
+
+2.  Réserver un sous-ensemble et entraîner le modèle sur tous les autres sous-ensembles
+
+3.  Tester le modèle sur le sous-ensemble réservé et enregistrer l’erreur de prédiction
+
+4.  Répéter ce processus jusqu’à chacun des k
+
+K-fold cross-validation (CV) is a robust method for estimating the accuracy of a model.
+
+# Modèle linéaire
+
+
+```{r}
+library(caret)
+
+
+# Define training control
+set.seed(123) 
+
+train.control <- trainControl(method = "repeatedcv",
+                              number = 10,
+                              repeats = 3 )
+# Train the model
+lm_model <- train(SalePrice ~., data = train, method = "lm",
+               trControl = train.control)
+
+# Summarize the results
+print(lm_model)
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(lm_model, test)
+  )
+
+write.csv(output, file = "data.csv", row.names = FALSE)
+
+```
+
+
+## glm
+
+
+```{r}
+train_control <- trainControl(method = "repeatedcv",
+                              number = 10,
+                              repeats = 3 )
+
+# Ajuster le modèle glm avec validation croisée
+glm_model <- train(SalePrice ~ ., data = train, method = "glm", family = "gaussian", trControl = train_control)
+
+print(glm_model)
+```
+
+```{r}
+plot( fitted(glm_model), residuals(glm_model) )
+```
+
+
+Le réglage des hyperparamètres est une étape critique du machine learning. Il s’agit de trouver le meilleur ensemble d’hyperparamètres qui maximisent les performances du modèle.
+
+Les hyperparamètres sont des paramètres de configuration utilisés pour contrôler le processus d’entraînement d’un modèle.
+
+Différents hyperparamètres peuvent avoir un impact significatif sur les performances de votre modèle. Le réglage de ces paramètres permet de:
+
+Améliorer la précision du modèle. Réduire le sur-ajustement. Optimisez le temps de formation du modèle.
+
+
+```{r}
+install.packages("caret")
+install.packages("xgboost")
+install.packages("e1071")  # Required for caret's train function
+
+library(e1071)
+library(caret)
+library(xgboost)
+
+# Load your data
+# Assume dtrain is already created using xgb.DMatrix
+
+# Define the parameter grid
+grid <- expand.grid(
+  nrounds = 100,
+  eta = c( 0.2, 0.3),
+  max_depth = c(10, 12, 14),
+  gamma = c(0,  0.2),
+  colsample_bytree = c(0.7, 1.0),
+  min_child_weight = c( 5, 7),
+  subsample = c(0.6, 0.8)
+)
+
+# Set up training control
+train_control <- trainControl(
+  method = "cv",           # Use cross-validation
+  number = 5,              # Number of folds in cross-validation
+  verboseIter = TRUE,      # Print training log
+  allowParallel = TRUE     # Allow parallel computation
+)
+
+# Train the model using caret
+xgb_train <- train(
+  x = as.matrix(train),    # Your training data (features)
+  y = label,             # Your training labels
+  trControl = train_control,
+  tuneGrid = grid,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+# Print the best parameters found
+print(xgb_train$bestTune)
+
+# Train the final model with the best parameters
+final_params <- list(
+  booster = "gbtree",
+  objective = "reg:squarederror",
+  eta = xgb_train$bestTune$eta,
+  max_depth = xgb_train$bestTune$max_depth,
+  gamma = xgb_train$bestTune$gamma,
+  colsample_bytree = xgb_train$bestTune$colsample_bytree,
+  min_child_weight = xgb_train$bestTune$min_child_weight,
+  subsample = xgb_train$bestTune$subsample
+)
+
+# Train the XGBoost model with the best parameters
+xgb_model <- xgb.train(params = final_params, dtrain, nrounds = 100)
+
+# Evaluate the model
+preds <- predict(xgb_model, dtest)
+
+```
+
+```{r}
+#| eval: false
+
+
+library(devtools)
+install_github("DillonHammill/DataEditR")
+
+# Load required packages
+library(DataEditR)
+
+# Save output to R object & csv file
+mtcars_new <- data_edit(iris,
+                        save_as = "mtcars_new.csv")
+```
+
+```{r}
+plot(model)
+```
+
+
+# 
+
+La marge d'erreur (E) est donnée par : $$ E = t_{\alpha/2} \cdot \frac{s}{\sqrt{n}}$$
+
+
+```{r}
+intervalle_confiance_GLM <- function(model, confidence_level = 0.95 ){
+  
+coeficients <- summary(model)$coefficients[, 1]
+ecart_type <- summary(model)$coefficients[, 2]
+
+
+# 1445 degrees of freedom
+n <- length( model$residuals)
+p <- length(coefficients(model))
+df <- n - p
+
+
+a <- confidence_level
+
+# Valeur critique de la t-distribution pour 95% de confiance
+t_critical <- qt(c((1-a)/2, 1 - (1-a)/2), df = df)
+
+lower_bound <- coeficients - t_critical[1] * ecart_type / sqrt(n)
+upper_bound <- coeficients + t_critical[2] * ecart_type / sqrt(n)
+
+intervalle_confiance <- cbind(lower_bound, upper_bound) %>%
+  round(2) %>%
+  as.data.frame() %>%
+  rownames_to_column("parametres")
+intervalle_confiance %>% gt_trabi()
+  
+  
+}
+
+
+intervalle_confiance_GLM(model = model, confidence_level = 0.95)
+```
+
+
+# Bagging et random forest
+
+
+```{r}
+result <- rforest(train, "SalePrice",  type = "regression", max.depth = 1)
+
+cv.rforest(result, mtry = 1:3, min.node.size = seq(1, 10, 5))
+```
+
+```{r}
+library(randomForest)
+
+
+# Entraîner le modèle Random Forest
+rf_model <- randomForest(SalePrice ~ ., data = train, ntree = 500, mtry = 10)
+
+# Afficher un résumé du modèle
+print(rf_model)
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(rf_model, test)
+  )
+
+write.csv(output, file = "data_rf.csv", row.names = FALSE)
+
+```
+
+
+# Boosting
+
+
+```{r}
+train <- data_onehot[1:nrow(train), ]
+test <- data_onehot[(nrow(train) + 1):nrow(data), ]
+
+# Construct xgb.DMatrix object from  local file.
+dtrain <- xgb.DMatrix(data = as.matrix( train ), label = label, missing = NA)
+dtest <- xgb.DMatrix(data = as.matrix( test ))
+
+
+# Set XGBoost parameters
+params <- list(
+  booster = "gbtree",
+  objective = "reg:squarederror",
+  eta = 0.3,
+  max_depth = 6,
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = 1,
+  subsample = 1
+)
+
+
+# Train the XGBoost model
+xgb_model <- xgb.train(params, dtrain, nrounds = 1000)
+
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(xgb_model, dtest)
+  )
+
+write.csv(output, file = "dataxgboost.csv", row.names = FALSE)
+
+```
+
+
+# random forest
+

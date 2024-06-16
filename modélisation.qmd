@@ -1,0 +1,789 @@
+---
+title: "Stage: Projet 1"
+title-block-banner: true
+
+subtitle: "House Prices - Advanced Regression Techniques"
+
+date: last-modified
+
+author: 
+  - name: Tra Bi Nene Othniel
+  - email: bineneothniel.tra@linkpact.fr
+  - url: 
+  
+keywords: 
+  - R for data-science
+  - regression techniques
+  - machine learning
+  
+
+format: 
+
+  html:
+    toc: true
+    toc-depth: 3
+    toc-expand: 1
+    toc-location: left
+    toc-title: "table des matières"
+    
+    
+    grid:
+      sidebar-width: 230px
+      body-width: 950px
+      margin-width: 100px
+      gutter-width: 1.5em
+    
+    number-sections: true
+    number-depth: 3
+    
+    smooth-scroll: true
+    code-fold: false
+    code-block-border-left: true
+    
+    code-summary: "montrer"
+    html-math-method: katex
+    anchor-sections: false
+    
+    other-links:
+      - icon: box-arrow-up-right
+        text: kaggle
+        href: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
+    
+        
+theme:
+    light: lumen
+    dark: cyborg
+      
+   
+editor: visual
+
+column: page-inset-right
+
+anchor-sections: true
+smooth-scroll: true
+html-math-method: katex
+
+code-annotations: hover
+code-link: true
+
+lightbox: true
+
+css: style.css
+
+echo: false
+
+execute: 
+  freeze: auto
+  error: false
+  warning: false
+
+eval: true
+
+comments:
+  hypothesis: 
+    theme: clean
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+library(ggridges)
+library(DataExplorer)
+library(naniar)
+library(tidyverse)
+library(gt)
+library(ggplot2)
+library(labelled)
+
+library(xgboost)
+
+```
+
+```{r}
+#| echo: false
+#| eval: true 
+#| file: 01_graphical_fonction.R
+```
+
+# Importation des données
+
+```{r}
+#| code-fold: show 
+
+train <- read.csv("data/train.csv", na.strings = "NA")
+test <- read.csv("data/test.csv", na.strings = "NA")
+
+
+cat("Dimensions (rows x columns): (", dim(train)[1], " x ", dim(train)[2], ")\n\n")
+```
+
+```{r}
+train %>%
+  slice_head(n = 5) %>%
+  gt_trabi() %>%
+  tab_source_note(md("Source : kaggle"))
+
+```
+
+- **Reading the text file line by line**
+
+```{r}
+lines <- readLines("data/data_description.txt")
+cat(lines, sep = "\n")
+```
+
+-   **79 variables explicatives**
+
+
+on regroupe les données de train et test pour éffectuer les mêmes modifications
+
+```{r}
+Y <- train$SalePrice
+label <- train$SalePrice
+Id <- test$Id
+
+data <- bind_rows( train %>% select(-SalePrice), test)
+```
+
+```{r}
+var_type_viz_1(train)
+```
+
+la colonne `Id` n’est pas nécessaire pour la formation du modèle.
+
+```{r}
+# modalités uniques
+data <- data %>% 
+  select( -Id)
+```
+
+
+## exploration des données via l'application shiny
+
+```{r}
+#| label: heatmap des corelaions des variables numerics
+corelation_heatmap(train)
+```
+
+## valeurs manquantes ?
+
+### observation
+
+```{r}
+#| layout-nrow: 2
+#| layout-ncol: 2
+# train %>% look_for()
+
+miss_data <- train %>%
+  questionr::freq.na() %>%
+  as.data.frame() %>%
+  rownames_to_column("variables") %>%
+  filter( missing > 0 )
+
+miss_data %>%
+  gt_trabi()
+
+
+
+gg_miss_var( train %>% select(missing$variables) )
+```
+## Remarque importantes après visualisation des données
+
+
+
+```{r}
+#miss_plot <- DataExplorer::plot_missing(train)
+# miss_plot
+```
+
+
+
+```{r}
+#| layout-nrow: 2
+#| layout-ncol: 2
+
+# gg_miss_case(train)
+hist(n_miss_row(train), xlab = "", main =  "Histograme du nombre de valeurs manquantes par ligne")
+
+
+missing <- miss_data %>% distinct(variables) %>% as.vector()
+# Create a heatmap of missing values
+vis_miss(train %>% select(missing$variables) ) +
+  labs(title = "Heatmap of Missing Values")
+```
+
+on observe que certaines variables ont des valeurs manquantes qui sont liées
+
+
+# Visualisation des données
+
+## Variable cible (SalePrice)
+
+```{r}
+summary(train$SalePrice)
+```
+
+```{r}
+
+var_quanti_viz_3(data = train, SalePrice)
+```
+
+```{r}
+
+# Segmenter la variable SalePrice en intervalles de 1e+5 
+train$sales_cut <- cut(train$SalePrice, breaks = seq(0, max(train$SalePrice, na.rm = TRUE) + 1e+5, by = 1e+5), labels = FALSE)*1e+5
+
+train$sales_cut <- as.factor(train$sales_cut)
+ggplot(data = train, mapping = aes( x = sales_cut))+
+  geom_bar()
+
+train <- train %>% select(- sales_cut)
+
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = SalePrice)
+```
+
+## exemple de Variables qualitatives
+
+### MSSubClass
+
+```{r}
+#| echo: false
+a <- train %>% 
+  distinct(MSSubClass) %>%
+  nrow()
+print(paste("il y a", a, "modalités"))
+```
+
+#### distribution
+
+```{r}
+var_quali_viz_1(data = train, var = MSSubClass)
+```
+
+```{r}
+var_quali_viz_2(data = train, var = MSSubClass)
+```
+
+```{r}
+var_quali_viz_3(data = train, class = MSSubClass)
+```
+
+```{r}
+var_quali_viz_4(data = train, class = MSSubClass)
+```
+
+#### lien avec la variable cible
+
+```{r}
+#| column: screen-inset-shaded
+#| layout-nrow: 1
+
+var_cible_quali_1(data = train, var = MSSubClass)
+
+# var_cible_quali_2(data = train, var = MSSubClass)
+
+var_cible_quali_3(data = train, var = MSSubClass)
+```
+
+## exemple de Variables quantitatives
+
+### LotFrontage
+
+```{r}
+missing_viz_1(data = train, class = LotFrontage)
+```
+
+```{r}
+
+var_quanti_viz_3(data = train, LotFrontage)
+```
+
+```{r}
+var_quanti_viz_1(data = train, var = LotFrontage)
+```
+
+```{r}
+summary(train$LotArea)
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = LotFrontage)
+```
+
+```{r}
+var_cible_quanti(data = train, var = LotFrontage)
+```
+
+```{r}
+var_quanti_viz_1(data = train, var = LotArea)
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = LotArea)
+```
+
+```{r}
+var_cible_quanti(data = train, var = LotArea)
+```
+
+### YearBuilt
+
+```{r}
+
+var_quanti_viz_3(data = train, YearBuilt)
+```
+
+```{r}
+var_quanti_viz_1(data = train, var = YearBuilt)
+```
+
+```{r}
+var_quanti_viz_2(data = train, var = YearBuilt)
+```
+
+```{r}
+download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphics-with-plotly.html")
+```
+
+
+
+
+# métrique d'évaluation (modèle le plus simple)
+
+```{r}
+files <- data.frame(
+  Id = test$Id,
+  SalePrice = rep(mean(train$SalePrice), nrow(test))
+  )
+
+# write.csv(data, file = "output.csv", row.names = FALSE)
+
+files %>% head(6)
+```
+
+le modèle le plus simple (modèle à 1 paramètre) a comme score **0.42577**
+
+```{r}
+ 
+
+
+
+# Convertir les variables à étiquettes en facteurs
+data$MSSubClass <- as.character(data$MSSubClass)
+data$OverallQual <- as.character(data$OverallQual)
+data$OverallCond <- as.character(data$OverallCond)
+
+data$Fireplaces <- as.character(data$Fireplaces)
+data$GarageCars <- as.character(data$GarageCars)
+data$BsmtFullBath <- as.character(data$BsmtFullBath)
+data$BsmtHalfBath <- as.character(data$BsmtHalfBath)
+
+data$FullBath <- as.character(data$FullBath)
+
+data$HalfBath <- as.character(data$HalfBath)
+data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
+data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
+data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
+
+data$YrSold <- as.character(data$YrSold)
+data$MoSold <- as.character(data$MoSold)
+
+# data$
+
+
+# quasi constante
+data <- data %>% 
+  select( -c(MiscVal, LowQualFinSF, PoolArea, PoolQC, X3SsnPorch)) 
+
+
+# variable avec une modalité dominante dépassant 97%
+data <- data %>% 
+  select( -c(Utilities, Condition2, RoofMatl, Heating)) 
+
+
+
+
+```
+
+# missing value imputing
+
+```{r}
+#  on remplace les missings
+
+data <- data %>%
+  mutate(
+    Alley = ifelse(is.na(Alley), "No.alley.access", Alley),
+    
+    BsmtQual = ifelse(is.na(BsmtQual), "No.Basement", BsmtQual),
+    BsmtCond = ifelse(is.na(BsmtCond), "No.Basement", BsmtCond),
+    BsmtExposure = ifelse(is.na(BsmtExposure), "No.Basement", BsmtExposure),
+    BsmtFinType1 = ifelse(is.na(BsmtFinType1), "No.Basement", BsmtFinType1),
+    BsmtFinType2 = ifelse(is.na(BsmtFinType2), "No.Basement", BsmtFinType2),
+    
+    MiscFeature = ifelse(is.na(MiscFeature), "None", "Yes"),
+    Fence = ifelse(is.na(Fence), "None", Fence),
+    FireplaceQu = ifelse(is.na(FireplaceQu), "No.Fireplace", FireplaceQu),
+    
+    GarageType = ifelse(is.na(GarageType), "No.Garage", GarageType),
+    GarageFinish = ifelse(is.na(GarageFinish), "No.Garage", GarageFinish),
+    GarageQual = ifelse(is.na(GarageQual), "No.Garage", GarageQual),
+    GarageCond = ifelse(is.na(GarageCond), "No.Garage", GarageCond)
+    )
+
+
+```
+
+## missforest
+
+```{r}
+
+
+# Remove rows with any NA values
+
+
+library(missForest)
+
+# Transformer toutes les colonnes de type caractère en facteur
+data <- data %>%
+  mutate(across(where(is.character), as.factor)) %>%
+  mutate(across(where(is.integer), as.numeric))
+         
+         
+data.imp <- missForest(data, verbose = TRUE, maxiter = 3, ntree = 10, replace = FALSE)
+
+var_type_viz_1(data)
+# clean_data <- na.omit(data)
+# glimpse(data)
+```
+
+```{r}
+# corelation_heatmap(data.imp$ximp)
+```
+
+# One-Hot Encoding
+
+```{r}
+
+#   converts each unique category into a binary column. 
+library(fastDummies)
+data_onehot <- dummy_cols(data.imp$ximp, remove_first_dummy = TRUE, remove_selected_columns = TRUE)
+
+# remove_first_dummy = TRUE: éviter la multicolinéarité 
+# remove_selected_columns = TRUE: Supprime les colonnes originales après l'encodage one-hot.
+
+
+# 
+library(janitor)
+data_onehot <- clean_names(data_onehot)
+
+```
+
+# colinéarité
+
+```{r}
+cor_matrix <- cor(data_onehot, method = "pearson")
+high_cor_threshold <- 0.8
+
+# Find pairs of highly correlated variables
+high_cor_pairs <- which(abs(cor_matrix) > high_cor_threshold & abs(cor_matrix) < 1, arr.ind = TRUE)
+
+# Display highly correlated variable pairs
+todrop <- high_cor_pairs %>% 
+  data.frame() %>%
+  rownames_to_column("variables")
+
+nl_dta <- data_onehot[, -todrop$col]
+
+dim(nl_dta)
+dim(train)
+```
+
+# Re-diviser les données
+
+```{r}
+train <- nl_dta[1:nrow(train), ]
+train$SalePrice = label
+test <- nl_dta[(nrow(train) + 1):nrow(data), ]
+train %>% head(6) 
+```
+
+# Méthodes de sélection de modèles
+
+Pour sélectionner automatiquement la meilleure combinaison de variables prédictives pour construire un modèle prédictif optimal. Il s’agit notamment des meilleures méthodes de sélection de sous-ensembles, de la régression par étapes et de la régression pénalisée (modèles de régression en crête, en lasso et en filet élastique). Nous présentons également des méthodes de régression basées sur les composantes principales, qui sont utiles lorsque les données contiennent plusieurs variables prédictives corrélées.
+
+# (repeated) k-fold cross-validation
+
+La méthode de validation croisée k-fold évalue la performance du modèle sur différents sous-ensembles de données d’entraînement, puis calcule le taux d’erreur de prédiction moyen.
+
+L’algorithme est le suivant :
+
+1.  Diviser aléatoirement l’ensemble de données en k-sous-ensembles (ou k-fold) (par exemple 5 sous-ensembles)
+
+2.  Réserver un sous-ensemble et entraîner le modèle sur tous les autres sous-ensembles
+
+3.  Tester le modèle sur le sous-ensemble réservé et enregistrer l’erreur de prédiction
+
+4.  Répéter ce processus jusqu’à chacun des k
+
+K-fold cross-validation (CV) is a robust method for estimating the accuracy of a model.
+
+
+# Modèle linéaire
+
+
+```{r}
+library(caret)
+
+
+# Define training control
+set.seed(123) 
+
+train.control <- trainControl(method = "repeatedcv",
+                              number = 10,
+                              repeats = 3 )
+# Train the model
+lm_model <- train(SalePrice ~., data = train, method = "lm",
+               trControl = train.control)
+
+# Summarize the results
+print(lm_model)
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(lm_model, test)
+  )
+
+write.csv(output, file = "data.csv", row.names = FALSE)
+
+```
+## glm
+
+
+```{r}
+
+
+
+train_control <- trainControl(method = "repeatedcv",
+                              number = 10,
+                              repeats = 3 )
+
+
+# Ajuster le modèle glm avec validation croisée
+glm_model <- train(SalePrice ~ ., data = train, method = "glm", family = "gaussian", trControl = train_control)
+
+print(glm_model)
+```
+```{r}
+plot( fitted(glm_model), residuals(glm_model) )
+```
+
+
+
+Le réglage des hyperparamètres est une étape critique du machine learning. Il s’agit de trouver le meilleur ensemble d’hyperparamètres qui maximisent les performances du modèle.
+
+Les hyperparamètres sont des paramètres de configuration utilisés pour contrôler le processus d’entraînement d’un modèle.
+
+Différents hyperparamètres peuvent avoir un impact significatif sur les performances de votre modèle. Le réglage de ces paramètres permet de:
+
+Améliorer la précision du modèle. Réduire le sur-ajustement. Optimisez le temps de formation du modèle.
+
+```{r}
+install.packages("caret")
+install.packages("xgboost")
+install.packages("e1071")  # Required for caret's train function
+
+library(e1071)
+library(caret)
+library(xgboost)
+
+# Load your data
+# Assume dtrain is already created using xgb.DMatrix
+
+# Define the parameter grid
+grid <- expand.grid(
+  nrounds = 100,
+  eta = c( 0.2, 0.3),
+  max_depth = c(10, 12, 14),
+  gamma = c(0,  0.2),
+  colsample_bytree = c(0.7, 1.0),
+  min_child_weight = c( 5, 7),
+  subsample = c(0.6, 0.8)
+)
+
+# Set up training control
+train_control <- trainControl(
+  method = "cv",           # Use cross-validation
+  number = 5,              # Number of folds in cross-validation
+  verboseIter = TRUE,      # Print training log
+  allowParallel = TRUE     # Allow parallel computation
+)
+
+# Train the model using caret
+xgb_train <- train(
+  x = as.matrix(train),    # Your training data (features)
+  y = label,             # Your training labels
+  trControl = train_control,
+  tuneGrid = grid,
+  method = "xgbTree",
+  verbose = TRUE
+)
+
+# Print the best parameters found
+print(xgb_train$bestTune)
+
+# Train the final model with the best parameters
+final_params <- list(
+  booster = "gbtree",
+  objective = "reg:squarederror",
+  eta = xgb_train$bestTune$eta,
+  max_depth = xgb_train$bestTune$max_depth,
+  gamma = xgb_train$bestTune$gamma,
+  colsample_bytree = xgb_train$bestTune$colsample_bytree,
+  min_child_weight = xgb_train$bestTune$min_child_weight,
+  subsample = xgb_train$bestTune$subsample
+)
+
+# Train the XGBoost model with the best parameters
+xgb_model <- xgb.train(params = final_params, dtrain, nrounds = 100)
+
+# Evaluate the model
+preds <- predict(xgb_model, dtest)
+
+```
+
+```{r}
+#| eval: false
+
+
+library(devtools)
+install_github("DillonHammill/DataEditR")
+
+# Load required packages
+library(DataEditR)
+
+# Save output to R object & csv file
+mtcars_new <- data_edit(iris,
+                        save_as = "mtcars_new.csv")
+```
+
+
+
+
+
+
+```{r}
+plot(model)
+```
+
+# 
+
+La marge d'erreur (E) est donnée par : $$ E = t_{\alpha/2} \cdot \frac{s}{\sqrt{n}}$$
+
+```{r}
+intervalle_confiance_GLM <- function(model, confidence_level = 0.95 ){
+  
+coeficients <- summary(model)$coefficients[, 1]
+ecart_type <- summary(model)$coefficients[, 2]
+
+
+# 1445 degrees of freedom
+n <- length( model$residuals)
+p <- length(coefficients(model))
+df <- n - p
+
+
+a <- confidence_level
+
+# Valeur critique de la t-distribution pour 95% de confiance
+t_critical <- qt(c((1-a)/2, 1 - (1-a)/2), df = df)
+
+lower_bound <- coeficients - t_critical[1] * ecart_type / sqrt(n)
+upper_bound <- coeficients + t_critical[2] * ecart_type / sqrt(n)
+
+intervalle_confiance <- cbind(lower_bound, upper_bound) %>%
+  round(2) %>%
+  as.data.frame() %>%
+  rownames_to_column("parametres")
+intervalle_confiance %>% gt_trabi()
+  
+  
+}
+
+
+intervalle_confiance_GLM(model = model, confidence_level = 0.95)
+```
+
+
+# Bagging et random forest
+
+```{r}
+result <- rforest(train, "SalePrice",  type = "regression", max.depth = 1)
+
+cv.rforest(result, mtry = 1:3, min.node.size = seq(1, 10, 5))
+```
+
+
+```{r}
+library(randomForest)
+
+
+# Entraîner le modèle Random Forest
+rf_model <- randomForest(SalePrice ~ ., data = train, ntree = 500, mtry = 10)
+
+# Afficher un résumé du modèle
+print(rf_model)
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(rf_model, test)
+  )
+
+write.csv(output, file = "data_rf.csv", row.names = FALSE)
+
+```
+
+# Boosting
+
+```{r}
+# Construct xgb.DMatrix object from  local file.
+dtrain <- xgb.DMatrix(data = as.matrix( train ), label = label, missing = NA)
+dtest <- xgb.DMatrix(data = as.matrix( test ))
+
+
+# Set XGBoost parameters
+params <- list(
+  booster = "gbtree",
+  objective = "reg:squarederror",
+  eta = 0.3,
+  max_depth = 6,
+  gamma = 0,
+  colsample_bytree = 1,
+  min_child_weight = 1,
+  subsample = 1
+)
+
+
+# Train the XGBoost model
+xgb_model <- xgb.train(params, dtrain, nrounds = 10000)
+
+```
+
+```{r}
+output <- data.frame(
+  Id = Id,
+  SalePrice = predict(xgb_model, dtest)
+  )
+
+write.csv(output, file = "data.csv", row.names = FALSE)
+
+```
+
+# random forest

@@ -1,0 +1,3895 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.4.553">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta name="dcterms.date" content="2024-06-07">
+<meta name="keywords" content="R for data-science, regression techniques, machine learning">
+<title>Stage: Projet 1</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+<script src="01_feauture_engineering_files/libs/clipboard/clipboard.min.js"></script>
+<script src="01_feauture_engineering_files/libs/quarto-html/quarto.js"></script>
+<script src="01_feauture_engineering_files/libs/quarto-html/popper.min.js"></script>
+<script src="01_feauture_engineering_files/libs/quarto-html/tippy.umd.min.js"></script>
+<link href="01_feauture_engineering_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="01_feauture_engineering_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-text-highlighting-styles">
+<link href="01_feauture_engineering_files/libs/quarto-html/quarto-syntax-highlighting-dark.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-text-highlighting-styles">
+<script src="01_feauture_engineering_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="01_feauture_engineering_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="01_feauture_engineering_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" class="quarto-color-scheme" id="quarto-bootstrap" data-mode="light">
+<link href="01_feauture_engineering_files/libs/bootstrap/bootstrap-dark.min.css" rel="prefetch" class="quarto-color-scheme quarto-color-alternate" id="quarto-bootstrap" data-mode="dark">
+<script src="01_feauture_engineering_files/libs/quarto-contrib/glightbox/glightbox.min.js"></script>
+<link href="01_feauture_engineering_files/libs/quarto-contrib/glightbox/glightbox.min.css" rel="stylesheet">
+<link href="01_feauture_engineering_files/libs/quarto-contrib/glightbox/lightbox.css" rel="stylesheet"><style>html{ scroll-behavior: smooth; }</style>
+<script type="application/json" class="js-hypothesis-config">
+{
+  "theme": "clean"
+}
+</script><script async="" src="https://hypothes.is/embed.js"></script><script>
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    document.body.classList.add('hypothesis-enabled');
+  });
+</script><link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="title-block-header" class="quarto-title-block default toc-left page-columns page-full"><div class="quarto-title-banner page-columns page-full">
+    <div class="quarto-title column-body">
+      <h1 class="title">Stage: Projet 1</h1>
+            <p class="subtitle lead">House Prices - Advanced Regression Techniques</p>
+                      </div>
+  </div>
+    
+  
+  <div class="quarto-title-meta">
+
+      
+      <div>
+      <div class="quarto-title-meta-heading">Published</div>
+      <div class="quarto-title-meta-contents">
+        <p class="date">June 7, 2024</p>
+      </div>
+    </div>
+    
+      
+    </div>
+    
+
+  <div>
+    <div class="keywords">
+      <div class="block-title">Keywords</div>
+      <p>R for data-science, regression techniques, machine learning</p>
+    </div>
+  </div>
+  
+  </header><div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="1"><h2 id="toc-title">table des matières</h2>
+   
+  <ul>
+<li><a href="#importation-des-donn%C3%A9es" id="toc-importation-des-données" class="nav-link active" data-scroll-target="#importation-des-donn%C3%A9es"><span class="header-section-number">1</span> Importation des données</a></li>
+  <li>
+<a href="#exploration-des-donn%C3%A9es" id="toc-exploration-des-données" class="nav-link" data-scroll-target="#exploration-des-donn%C3%A9es"><span class="header-section-number">2</span> exploration des données</a>
+  <ul class="collapse">
+<li>
+<a href="#valeurs-manquantes" id="toc-valeurs-manquantes" class="nav-link" data-scroll-target="#valeurs-manquantes"><span class="header-section-number">2.1</span> valeurs manquantes ?</a>
+  <ul class="collapse">
+<li><a href="#observation" id="toc-observation" class="nav-link" data-scroll-target="#observation"><span class="header-section-number">2.1.1</span> observation</a></li>
+  </ul>
+</li>
+  </ul>
+</li>
+  <li>
+<a href="#visualisation-des-donn%C3%A9es" id="toc-visualisation-des-données" class="nav-link" data-scroll-target="#visualisation-des-donn%C3%A9es"><span class="header-section-number">3</span> Visualisation des données</a>
+  <ul class="collapse">
+<li><a href="#variable-cible-saleprice" id="toc-variable-cible-saleprice" class="nav-link" data-scroll-target="#variable-cible-saleprice"><span class="header-section-number">3.1</span> Variable cible (SalePrice)</a></li>
+  <li>
+<a href="#exemple-de-variables-qualitatives" id="toc-exemple-de-variables-qualitatives" class="nav-link" data-scroll-target="#exemple-de-variables-qualitatives"><span class="header-section-number">3.2</span> exemple de Variables qualitatives</a>
+  <ul class="collapse">
+<li><a href="#mssubclass" id="toc-mssubclass" class="nav-link" data-scroll-target="#mssubclass"><span class="header-section-number">3.2.1</span> MSSubClass</a></li>
+  </ul>
+</li>
+  <li>
+<a href="#exemple-de-variables-quantitatives" id="toc-exemple-de-variables-quantitatives" class="nav-link" data-scroll-target="#exemple-de-variables-quantitatives"><span class="header-section-number">3.3</span> exemple de Variables quantitatives</a>
+  <ul class="collapse">
+<li><a href="#lotfrontage" id="toc-lotfrontage" class="nav-link" data-scroll-target="#lotfrontage"><span class="header-section-number">3.3.1</span> LotFrontage</a></li>
+  <li><a href="#yearbuilt" id="toc-yearbuilt" class="nav-link" data-scroll-target="#yearbuilt"><span class="header-section-number">3.3.2</span> YearBuilt</a></li>
+  </ul>
+</li>
+  </ul>
+</li>
+  </ul><div class="quarto-other-links"><h2>Other Links</h2><ul><li><a href="https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques"><i class="bi bi-box-arrow-up-right"></i>kaggle</a></li></ul></div></nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+</div>
+<main class="content quarto-banner-title-block page-columns page-full" id="quarto-document-content"><div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-2-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-1"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="importation-des-données" class="level1 page-columns page-full" data-number="1"><h1 data-number="1">
+<span class="header-section-number">1</span> Importation des données</h1>
+<div class="cell page-columns page-full">
+<div class="cell-output-display column-page-inset-right">
+<div>
+<div id="usynshpjsw" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#usynshpjsw table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#usynshpjsw thead, #usynshpjsw tbody, #usynshpjsw tfoot, #usynshpjsw tr, #usynshpjsw td, #usynshpjsw th {
+  border-style: none;
+}
+
+#usynshpjsw p {
+  margin: 0;
+  padding: 0;
+}
+
+#usynshpjsw .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 3px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#usynshpjsw .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#usynshpjsw .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#usynshpjsw .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 3px;
+  border-top-color: #FFFFFF;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#usynshpjsw .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#usynshpjsw .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#usynshpjsw .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#usynshpjsw .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#usynshpjsw .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#usynshpjsw .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#usynshpjsw .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#usynshpjsw .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#usynshpjsw .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#usynshpjsw .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#usynshpjsw .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usynshpjsw .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#usynshpjsw .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#usynshpjsw .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#usynshpjsw .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usynshpjsw .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#usynshpjsw .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usynshpjsw .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#usynshpjsw .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usynshpjsw .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#usynshpjsw .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#usynshpjsw .gt_left {
+  text-align: left;
+}
+
+#usynshpjsw .gt_center {
+  text-align: center;
+}
+
+#usynshpjsw .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#usynshpjsw .gt_font_normal {
+  font-weight: normal;
+}
+
+#usynshpjsw .gt_font_bold {
+  font-weight: bold;
+}
+
+#usynshpjsw .gt_font_italic {
+  font-style: italic;
+}
+
+#usynshpjsw .gt_super {
+  font-size: 65%;
+}
+
+#usynshpjsw .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#usynshpjsw .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#usynshpjsw .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#usynshpjsw .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#usynshpjsw .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#usynshpjsw .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#usynshpjsw .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+</colgroup>
+<thead><tr class="header gt_col_headings">
+<th id="Id" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Id</th>
+<th id="MSSubClass" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MSSubClass</th>
+<th id="MSZoning" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MSZoning</th>
+<th id="LotFrontage" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotFrontage</th>
+<th id="LotArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotArea</th>
+<th id="Street" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Street</th>
+<th id="Alley" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Alley</th>
+<th id="LotShape" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotShape</th>
+<th id="LandContour" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LandContour</th>
+<th id="Utilities" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Utilities</th>
+<th id="LotConfig" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotConfig</th>
+<th id="LandSlope" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LandSlope</th>
+<th id="Neighborhood" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Neighborhood</th>
+<th id="Condition1" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Condition1</th>
+<th id="Condition2" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Condition2</th>
+<th id="BldgType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BldgType</th>
+<th id="HouseStyle" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HouseStyle</th>
+<th id="OverallQual" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OverallQual</th>
+<th id="OverallCond" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OverallCond</th>
+<th id="YearBuilt" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YearBuilt</th>
+<th id="YearRemodAdd" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YearRemodAdd</th>
+<th id="RoofStyle" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">RoofStyle</th>
+<th id="RoofMatl" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">RoofMatl</th>
+<th id="Exterior1st" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Exterior1st</th>
+<th id="Exterior2nd" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Exterior2nd</th>
+<th id="MasVnrType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MasVnrType</th>
+<th id="MasVnrArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MasVnrArea</th>
+<th id="ExterQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ExterQual</th>
+<th id="ExterCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ExterCond</th>
+<th id="Foundation" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Foundation</th>
+<th id="BsmtQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtQual</th>
+<th id="BsmtCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtCond</th>
+<th id="BsmtExposure" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtExposure</th>
+<th id="BsmtFinType1" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinType1</th>
+<th id="BsmtFinSF1" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinSF1</th>
+<th id="BsmtFinType2" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinType2</th>
+<th id="BsmtFinSF2" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinSF2</th>
+<th id="BsmtUnfSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtUnfSF</th>
+<th id="TotalBsmtSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">TotalBsmtSF</th>
+<th id="Heating" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Heating</th>
+<th id="HeatingQC" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HeatingQC</th>
+<th id="CentralAir" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">CentralAir</th>
+<th id="Electrical" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Electrical</th>
+<th id="X1stFlrSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X1stFlrSF</th>
+<th id="X2ndFlrSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X2ndFlrSF</th>
+<th id="LowQualFinSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LowQualFinSF</th>
+<th id="GrLivArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GrLivArea</th>
+<th id="BsmtFullBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFullBath</th>
+<th id="BsmtHalfBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtHalfBath</th>
+<th id="FullBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">FullBath</th>
+<th id="HalfBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HalfBath</th>
+<th id="BedroomAbvGr" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BedroomAbvGr</th>
+<th id="KitchenAbvGr" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">KitchenAbvGr</th>
+<th id="KitchenQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">KitchenQual</th>
+<th id="TotRmsAbvGrd" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">TotRmsAbvGrd</th>
+<th id="Functional" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Functional</th>
+<th id="Fireplaces" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Fireplaces</th>
+<th id="FireplaceQu" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">FireplaceQu</th>
+<th id="GarageType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageType</th>
+<th id="GarageYrBlt" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageYrBlt</th>
+<th id="GarageFinish" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageFinish</th>
+<th id="GarageCars" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageCars</th>
+<th id="GarageArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageArea</th>
+<th id="GarageQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageQual</th>
+<th id="GarageCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageCond</th>
+<th id="PavedDrive" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PavedDrive</th>
+<th id="WoodDeckSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">WoodDeckSF</th>
+<th id="OpenPorchSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OpenPorchSF</th>
+<th id="EnclosedPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">EnclosedPorch</th>
+<th id="X3SsnPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X3SsnPorch</th>
+<th id="ScreenPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ScreenPorch</th>
+<th id="PoolArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PoolArea</th>
+<th id="PoolQC" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PoolQC</th>
+<th id="Fence" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Fence</th>
+<th id="MiscFeature" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MiscFeature</th>
+<th id="MiscVal" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MiscVal</th>
+<th id="MoSold" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MoSold</th>
+<th id="YrSold" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YrSold</th>
+<th id="SaleType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">SaleType</th>
+<th id="SaleCondition" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">SaleCondition</th>
+<th id="SalePrice" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">SalePrice</th>
+</tr></thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">1</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">65</td>
+<td class="gt_row gt_right" headers="LotArea">8450</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">Reg</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">CollgCr</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">7</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">2003</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">2003</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">BrkFace</td>
+<td class="gt_row gt_right" headers="MasVnrArea">196</td>
+<td class="gt_row gt_left" headers="ExterQual">Gd</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">706</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">150</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">856</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">856</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">854</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1710</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">1</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">8</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">0</td>
+<td class="gt_row gt_left" headers="FireplaceQu">NA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">2003</td>
+<td class="gt_row gt_left" headers="GarageFinish">RFn</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">548</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">0</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">61</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">2</td>
+<td class="gt_row gt_right" headers="YrSold">2008</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+<td class="gt_row gt_right" headers="SalePrice">208500</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">2</td>
+<td class="gt_row gt_right" headers="MSSubClass">20</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">80</td>
+<td class="gt_row gt_right" headers="LotArea">9600</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">Reg</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">FR2</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Veenker</td>
+<td class="gt_row gt_left" headers="Condition1">Feedr</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">1Story</td>
+<td class="gt_row gt_right" headers="OverallQual">6</td>
+<td class="gt_row gt_right" headers="OverallCond">8</td>
+<td class="gt_row gt_right" headers="YearBuilt">1976</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1976</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">MetalSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">MetalSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">CBlock</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">Gd</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">ALQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">978</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">284</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">1262</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">1262</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">0</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1262</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">1</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">0</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">TA</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">6</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">TA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1976</td>
+<td class="gt_row gt_left" headers="GarageFinish">RFn</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">460</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">298</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">0</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">5</td>
+<td class="gt_row gt_right" headers="YrSold">2007</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+<td class="gt_row gt_right" headers="SalePrice">181500</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">3</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">68</td>
+<td class="gt_row gt_right" headers="LotArea">11250</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">CollgCr</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">7</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">2001</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">2002</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">BrkFace</td>
+<td class="gt_row gt_right" headers="MasVnrArea">162</td>
+<td class="gt_row gt_left" headers="ExterQual">Gd</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">Mn</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">486</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">434</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">920</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">920</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">866</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1786</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">1</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">6</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">TA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">2001</td>
+<td class="gt_row gt_left" headers="GarageFinish">RFn</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">608</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">0</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">42</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">9</td>
+<td class="gt_row gt_right" headers="YrSold">2008</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+<td class="gt_row gt_right" headers="SalePrice">223500</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">4</td>
+<td class="gt_row gt_right" headers="MSSubClass">70</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">60</td>
+<td class="gt_row gt_right" headers="LotArea">9550</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Corner</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Crawfor</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">7</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">1915</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1970</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">Wd Sdng</td>
+<td class="gt_row gt_left" headers="Exterior2nd">Wd Shng</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">BrkTil</td>
+<td class="gt_row gt_left" headers="BsmtQual">TA</td>
+<td class="gt_row gt_left" headers="BsmtCond">Gd</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">ALQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">216</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">540</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">756</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Gd</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">961</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">756</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1717</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">1</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">1</td>
+<td class="gt_row gt_right" headers="HalfBath">0</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">7</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">Gd</td>
+<td class="gt_row gt_left" headers="GarageType">Detchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1998</td>
+<td class="gt_row gt_left" headers="GarageFinish">Unf</td>
+<td class="gt_row gt_right" headers="GarageCars">3</td>
+<td class="gt_row gt_right" headers="GarageArea">642</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">0</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">35</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">272</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">2</td>
+<td class="gt_row gt_right" headers="YrSold">2006</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Abnorml</td>
+<td class="gt_row gt_right" headers="SalePrice">140000</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">5</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">84</td>
+<td class="gt_row gt_right" headers="LotArea">14260</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">FR2</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">NoRidge</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">8</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">2000</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">2000</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">BrkFace</td>
+<td class="gt_row gt_right" headers="MasVnrArea">350</td>
+<td class="gt_row gt_left" headers="ExterQual">Gd</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">Av</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">655</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">490</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">1145</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">1145</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">1053</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">2198</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">1</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">4</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">9</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">TA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">2000</td>
+<td class="gt_row gt_left" headers="GarageFinish">RFn</td>
+<td class="gt_row gt_right" headers="GarageCars">3</td>
+<td class="gt_row gt_right" headers="GarageArea">836</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">192</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">84</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">12</td>
+<td class="gt_row gt_right" headers="YrSold">2008</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+<td class="gt_row gt_right" headers="SalePrice">250000</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">6</td>
+<td class="gt_row gt_right" headers="MSSubClass">50</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">85</td>
+<td class="gt_row gt_right" headers="LotArea">14115</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Mitchel</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">1.5Fin</td>
+<td class="gt_row gt_right" headers="OverallQual">5</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">1993</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1995</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">Wood</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">732</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">64</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">796</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">796</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">566</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1362</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">1</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">1</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">1</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">TA</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">5</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">0</td>
+<td class="gt_row gt_left" headers="FireplaceQu">NA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1993</td>
+<td class="gt_row gt_left" headers="GarageFinish">Unf</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">480</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">40</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">30</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">320</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">MnPrv</td>
+<td class="gt_row gt_left" headers="MiscFeature">Shed</td>
+<td class="gt_row gt_right" headers="MiscVal">700</td>
+<td class="gt_row gt_right" headers="MoSold">10</td>
+<td class="gt_row gt_right" headers="YrSold">2009</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+<td class="gt_row gt_right" headers="SalePrice">143000</td>
+</tr>
+</tbody>
+<tfoot class="gt_sourcenotes"><tr class="odd">
+<td colspan="81" class="gt_sourcenote">**@bineneothniel.tra<br>
+</td>
+</tr></tfoot>
+</table>
+</div>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display column-page-inset-right">
+<div>
+<div id="kfttubsroq" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#kfttubsroq table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#kfttubsroq thead, #kfttubsroq tbody, #kfttubsroq tfoot, #kfttubsroq tr, #kfttubsroq td, #kfttubsroq th {
+  border-style: none;
+}
+
+#kfttubsroq p {
+  margin: 0;
+  padding: 0;
+}
+
+#kfttubsroq .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 3px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#kfttubsroq .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#kfttubsroq .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#kfttubsroq .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 3px;
+  border-top-color: #FFFFFF;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#kfttubsroq .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#kfttubsroq .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#kfttubsroq .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#kfttubsroq .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#kfttubsroq .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#kfttubsroq .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#kfttubsroq .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#kfttubsroq .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#kfttubsroq .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#kfttubsroq .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#kfttubsroq .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kfttubsroq .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#kfttubsroq .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#kfttubsroq .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#kfttubsroq .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kfttubsroq .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#kfttubsroq .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kfttubsroq .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#kfttubsroq .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kfttubsroq .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#kfttubsroq .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#kfttubsroq .gt_left {
+  text-align: left;
+}
+
+#kfttubsroq .gt_center {
+  text-align: center;
+}
+
+#kfttubsroq .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#kfttubsroq .gt_font_normal {
+  font-weight: normal;
+}
+
+#kfttubsroq .gt_font_bold {
+  font-weight: bold;
+}
+
+#kfttubsroq .gt_font_italic {
+  font-style: italic;
+}
+
+#kfttubsroq .gt_super {
+  font-size: 65%;
+}
+
+#kfttubsroq .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#kfttubsroq .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#kfttubsroq .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#kfttubsroq .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#kfttubsroq .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#kfttubsroq .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#kfttubsroq .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+<col style="width: 1%">
+</colgroup>
+<thead><tr class="header gt_col_headings">
+<th id="Id" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Id</th>
+<th id="MSSubClass" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MSSubClass</th>
+<th id="MSZoning" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MSZoning</th>
+<th id="LotFrontage" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotFrontage</th>
+<th id="LotArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotArea</th>
+<th id="Street" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Street</th>
+<th id="Alley" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Alley</th>
+<th id="LotShape" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotShape</th>
+<th id="LandContour" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LandContour</th>
+<th id="Utilities" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Utilities</th>
+<th id="LotConfig" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LotConfig</th>
+<th id="LandSlope" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LandSlope</th>
+<th id="Neighborhood" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Neighborhood</th>
+<th id="Condition1" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Condition1</th>
+<th id="Condition2" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Condition2</th>
+<th id="BldgType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BldgType</th>
+<th id="HouseStyle" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HouseStyle</th>
+<th id="OverallQual" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OverallQual</th>
+<th id="OverallCond" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OverallCond</th>
+<th id="YearBuilt" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YearBuilt</th>
+<th id="YearRemodAdd" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YearRemodAdd</th>
+<th id="RoofStyle" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">RoofStyle</th>
+<th id="RoofMatl" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">RoofMatl</th>
+<th id="Exterior1st" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Exterior1st</th>
+<th id="Exterior2nd" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Exterior2nd</th>
+<th id="MasVnrType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MasVnrType</th>
+<th id="MasVnrArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MasVnrArea</th>
+<th id="ExterQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ExterQual</th>
+<th id="ExterCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ExterCond</th>
+<th id="Foundation" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Foundation</th>
+<th id="BsmtQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtQual</th>
+<th id="BsmtCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtCond</th>
+<th id="BsmtExposure" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtExposure</th>
+<th id="BsmtFinType1" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinType1</th>
+<th id="BsmtFinSF1" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinSF1</th>
+<th id="BsmtFinType2" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinType2</th>
+<th id="BsmtFinSF2" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFinSF2</th>
+<th id="BsmtUnfSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtUnfSF</th>
+<th id="TotalBsmtSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">TotalBsmtSF</th>
+<th id="Heating" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Heating</th>
+<th id="HeatingQC" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HeatingQC</th>
+<th id="CentralAir" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">CentralAir</th>
+<th id="Electrical" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Electrical</th>
+<th id="X1stFlrSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X1stFlrSF</th>
+<th id="X2ndFlrSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X2ndFlrSF</th>
+<th id="LowQualFinSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">LowQualFinSF</th>
+<th id="GrLivArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GrLivArea</th>
+<th id="BsmtFullBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtFullBath</th>
+<th id="BsmtHalfBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BsmtHalfBath</th>
+<th id="FullBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">FullBath</th>
+<th id="HalfBath" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">HalfBath</th>
+<th id="BedroomAbvGr" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">BedroomAbvGr</th>
+<th id="KitchenAbvGr" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">KitchenAbvGr</th>
+<th id="KitchenQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">KitchenQual</th>
+<th id="TotRmsAbvGrd" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">TotRmsAbvGrd</th>
+<th id="Functional" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Functional</th>
+<th id="Fireplaces" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Fireplaces</th>
+<th id="FireplaceQu" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">FireplaceQu</th>
+<th id="GarageType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageType</th>
+<th id="GarageYrBlt" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageYrBlt</th>
+<th id="GarageFinish" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageFinish</th>
+<th id="GarageCars" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageCars</th>
+<th id="GarageArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageArea</th>
+<th id="GarageQual" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageQual</th>
+<th id="GarageCond" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">GarageCond</th>
+<th id="PavedDrive" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PavedDrive</th>
+<th id="WoodDeckSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">WoodDeckSF</th>
+<th id="OpenPorchSF" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">OpenPorchSF</th>
+<th id="EnclosedPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">EnclosedPorch</th>
+<th id="X3SsnPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">X3SsnPorch</th>
+<th id="ScreenPorch" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">ScreenPorch</th>
+<th id="PoolArea" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PoolArea</th>
+<th id="PoolQC" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">PoolQC</th>
+<th id="Fence" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">Fence</th>
+<th id="MiscFeature" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MiscFeature</th>
+<th id="MiscVal" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MiscVal</th>
+<th id="MoSold" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">MoSold</th>
+<th id="YrSold" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">YrSold</th>
+<th id="SaleType" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">SaleType</th>
+<th id="SaleCondition" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">SaleCondition</th>
+</tr></thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">1461</td>
+<td class="gt_row gt_right" headers="MSSubClass">20</td>
+<td class="gt_row gt_left" headers="MSZoning">RH</td>
+<td class="gt_row gt_right" headers="LotFrontage">80</td>
+<td class="gt_row gt_right" headers="LotArea">11622</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">Reg</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">NAmes</td>
+<td class="gt_row gt_left" headers="Condition1">Feedr</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">1Story</td>
+<td class="gt_row gt_right" headers="OverallQual">5</td>
+<td class="gt_row gt_right" headers="OverallCond">6</td>
+<td class="gt_row gt_right" headers="YearBuilt">1961</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1961</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">CBlock</td>
+<td class="gt_row gt_left" headers="BsmtQual">TA</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">Rec</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">468</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">LwQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">144</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">270</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">882</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">TA</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">896</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">0</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">896</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">1</td>
+<td class="gt_row gt_right" headers="HalfBath">0</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">2</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">TA</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">5</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">0</td>
+<td class="gt_row gt_left" headers="FireplaceQu">NA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1961</td>
+<td class="gt_row gt_left" headers="GarageFinish">Unf</td>
+<td class="gt_row gt_right" headers="GarageCars">1</td>
+<td class="gt_row gt_right" headers="GarageArea">730</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">140</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">0</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">120</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">MnPrv</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">6</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">1462</td>
+<td class="gt_row gt_right" headers="MSSubClass">20</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">81</td>
+<td class="gt_row gt_right" headers="LotArea">14267</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Corner</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">NAmes</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">1Story</td>
+<td class="gt_row gt_right" headers="OverallQual">6</td>
+<td class="gt_row gt_right" headers="OverallCond">6</td>
+<td class="gt_row gt_right" headers="YearBuilt">1958</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1958</td>
+<td class="gt_row gt_left" headers="RoofStyle">Hip</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">Wd Sdng</td>
+<td class="gt_row gt_left" headers="Exterior2nd">Wd Sdng</td>
+<td class="gt_row gt_left" headers="MasVnrType">BrkFace</td>
+<td class="gt_row gt_right" headers="MasVnrArea">108</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">CBlock</td>
+<td class="gt_row gt_left" headers="BsmtQual">TA</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">ALQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">923</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">406</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">1329</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">TA</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">1329</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">0</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1329</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">1</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">6</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">0</td>
+<td class="gt_row gt_left" headers="FireplaceQu">NA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1958</td>
+<td class="gt_row gt_left" headers="GarageFinish">Unf</td>
+<td class="gt_row gt_right" headers="GarageCars">1</td>
+<td class="gt_row gt_right" headers="GarageArea">312</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">393</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">36</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">Gar2</td>
+<td class="gt_row gt_right" headers="MiscVal">12500</td>
+<td class="gt_row gt_right" headers="MoSold">6</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">1463</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">74</td>
+<td class="gt_row gt_right" headers="LotArea">13830</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Gilbert</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">5</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">1997</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1998</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">791</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">137</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">928</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Gd</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">928</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">701</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1629</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">TA</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">6</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">TA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1997</td>
+<td class="gt_row gt_left" headers="GarageFinish">Fin</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">482</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">212</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">34</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">MnPrv</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">3</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">1464</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">78</td>
+<td class="gt_row gt_right" headers="LotArea">9978</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Gilbert</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">6</td>
+<td class="gt_row gt_right" headers="OverallCond">6</td>
+<td class="gt_row gt_right" headers="YearBuilt">1998</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1998</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">VinylSd</td>
+<td class="gt_row gt_left" headers="Exterior2nd">VinylSd</td>
+<td class="gt_row gt_left" headers="MasVnrType">BrkFace</td>
+<td class="gt_row gt_right" headers="MasVnrArea">20</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">TA</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">GLQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">602</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">324</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">926</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">926</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">678</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1604</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">7</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">Gd</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1998</td>
+<td class="gt_row gt_left" headers="GarageFinish">Fin</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">470</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">360</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">36</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">6</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_right" headers="Id">1465</td>
+<td class="gt_row gt_right" headers="MSSubClass">120</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">43</td>
+<td class="gt_row gt_right" headers="LotArea">5005</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">HLS</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Inside</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">StoneBr</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">TwnhsE</td>
+<td class="gt_row gt_left" headers="HouseStyle">1Story</td>
+<td class="gt_row gt_right" headers="OverallQual">8</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">1992</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1992</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">HdBoard</td>
+<td class="gt_row gt_left" headers="Exterior2nd">HdBoard</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">Gd</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">ALQ</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">263</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">1017</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">1280</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Ex</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">1280</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">0</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1280</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">0</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">2</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">Gd</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">5</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">0</td>
+<td class="gt_row gt_left" headers="FireplaceQu">NA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1992</td>
+<td class="gt_row gt_left" headers="GarageFinish">RFn</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">506</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">0</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">82</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">144</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">1</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_right" headers="Id">1466</td>
+<td class="gt_row gt_right" headers="MSSubClass">60</td>
+<td class="gt_row gt_left" headers="MSZoning">RL</td>
+<td class="gt_row gt_right" headers="LotFrontage">75</td>
+<td class="gt_row gt_right" headers="LotArea">10000</td>
+<td class="gt_row gt_left" headers="Street">Pave</td>
+<td class="gt_row gt_left" headers="Alley">NA</td>
+<td class="gt_row gt_left" headers="LotShape">IR1</td>
+<td class="gt_row gt_left" headers="LandContour">Lvl</td>
+<td class="gt_row gt_left" headers="Utilities">AllPub</td>
+<td class="gt_row gt_left" headers="LotConfig">Corner</td>
+<td class="gt_row gt_left" headers="LandSlope">Gtl</td>
+<td class="gt_row gt_left" headers="Neighborhood">Gilbert</td>
+<td class="gt_row gt_left" headers="Condition1">Norm</td>
+<td class="gt_row gt_left" headers="Condition2">Norm</td>
+<td class="gt_row gt_left" headers="BldgType">1Fam</td>
+<td class="gt_row gt_left" headers="HouseStyle">2Story</td>
+<td class="gt_row gt_right" headers="OverallQual">6</td>
+<td class="gt_row gt_right" headers="OverallCond">5</td>
+<td class="gt_row gt_right" headers="YearBuilt">1993</td>
+<td class="gt_row gt_right" headers="YearRemodAdd">1994</td>
+<td class="gt_row gt_left" headers="RoofStyle">Gable</td>
+<td class="gt_row gt_left" headers="RoofMatl">CompShg</td>
+<td class="gt_row gt_left" headers="Exterior1st">HdBoard</td>
+<td class="gt_row gt_left" headers="Exterior2nd">HdBoard</td>
+<td class="gt_row gt_left" headers="MasVnrType">None</td>
+<td class="gt_row gt_right" headers="MasVnrArea">0</td>
+<td class="gt_row gt_left" headers="ExterQual">TA</td>
+<td class="gt_row gt_left" headers="ExterCond">TA</td>
+<td class="gt_row gt_left" headers="Foundation">PConc</td>
+<td class="gt_row gt_left" headers="BsmtQual">Gd</td>
+<td class="gt_row gt_left" headers="BsmtCond">TA</td>
+<td class="gt_row gt_left" headers="BsmtExposure">No</td>
+<td class="gt_row gt_left" headers="BsmtFinType1">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF1">0</td>
+<td class="gt_row gt_left" headers="BsmtFinType2">Unf</td>
+<td class="gt_row gt_right" headers="BsmtFinSF2">0</td>
+<td class="gt_row gt_right" headers="BsmtUnfSF">763</td>
+<td class="gt_row gt_right" headers="TotalBsmtSF">763</td>
+<td class="gt_row gt_left" headers="Heating">GasA</td>
+<td class="gt_row gt_left" headers="HeatingQC">Gd</td>
+<td class="gt_row gt_left" headers="CentralAir">Y</td>
+<td class="gt_row gt_left" headers="Electrical">SBrkr</td>
+<td class="gt_row gt_right" headers="X1stFlrSF">763</td>
+<td class="gt_row gt_right" headers="X2ndFlrSF">892</td>
+<td class="gt_row gt_right" headers="LowQualFinSF">0</td>
+<td class="gt_row gt_right" headers="GrLivArea">1655</td>
+<td class="gt_row gt_right" headers="BsmtFullBath">0</td>
+<td class="gt_row gt_right" headers="BsmtHalfBath">0</td>
+<td class="gt_row gt_right" headers="FullBath">2</td>
+<td class="gt_row gt_right" headers="HalfBath">1</td>
+<td class="gt_row gt_right" headers="BedroomAbvGr">3</td>
+<td class="gt_row gt_right" headers="KitchenAbvGr">1</td>
+<td class="gt_row gt_left" headers="KitchenQual">TA</td>
+<td class="gt_row gt_right" headers="TotRmsAbvGrd">7</td>
+<td class="gt_row gt_left" headers="Functional">Typ</td>
+<td class="gt_row gt_right" headers="Fireplaces">1</td>
+<td class="gt_row gt_left" headers="FireplaceQu">TA</td>
+<td class="gt_row gt_left" headers="GarageType">Attchd</td>
+<td class="gt_row gt_right" headers="GarageYrBlt">1993</td>
+<td class="gt_row gt_left" headers="GarageFinish">Fin</td>
+<td class="gt_row gt_right" headers="GarageCars">2</td>
+<td class="gt_row gt_right" headers="GarageArea">440</td>
+<td class="gt_row gt_left" headers="GarageQual">TA</td>
+<td class="gt_row gt_left" headers="GarageCond">TA</td>
+<td class="gt_row gt_left" headers="PavedDrive">Y</td>
+<td class="gt_row gt_right" headers="WoodDeckSF">157</td>
+<td class="gt_row gt_right" headers="OpenPorchSF">84</td>
+<td class="gt_row gt_right" headers="EnclosedPorch">0</td>
+<td class="gt_row gt_right" headers="X3SsnPorch">0</td>
+<td class="gt_row gt_right" headers="ScreenPorch">0</td>
+<td class="gt_row gt_right" headers="PoolArea">0</td>
+<td class="gt_row gt_left" headers="PoolQC">NA</td>
+<td class="gt_row gt_left" headers="Fence">NA</td>
+<td class="gt_row gt_left" headers="MiscFeature">NA</td>
+<td class="gt_row gt_right" headers="MiscVal">0</td>
+<td class="gt_row gt_right" headers="MoSold">4</td>
+<td class="gt_row gt_right" headers="YrSold">2010</td>
+<td class="gt_row gt_left" headers="SaleType">WD</td>
+<td class="gt_row gt_left" headers="SaleCondition">Normal</td>
+</tr>
+</tbody>
+<tfoot class="gt_sourcenotes"><tr class="odd">
+<td colspan="80" class="gt_sourcenote">**@bineneothniel.tra<br>
+</td>
+</tr></tfoot>
+</table>
+</div>
+</div>
+</div>
+</div>
+<p>J’éfectue la visualisation sur train, et j’applique les modifications sur les variables de data</p>
+<div class="cell">
+
+</div>
+</section><section id="exploration-des-données" class="level1 page-columns page-full" data-number="2"><h1 data-number="2">
+<span class="header-section-number">2</span> exploration des données</h1>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "Id"            "MSSubClass"    "MSZoning"      "LotFrontage"  
+ [5] "LotArea"       "Street"        "Alley"         "LotShape"     
+ [9] "LandContour"   "Utilities"     "LotConfig"     "LandSlope"    
+[13] "Neighborhood"  "Condition1"    "Condition2"    "BldgType"     
+[17] "HouseStyle"    "OverallQual"   "OverallCond"   "YearBuilt"    
+[21] "YearRemodAdd"  "RoofStyle"     "RoofMatl"      "Exterior1st"  
+[25] "Exterior2nd"   "MasVnrType"    "MasVnrArea"    "ExterQual"    
+[29] "ExterCond"     "Foundation"    "BsmtQual"      "BsmtCond"     
+[33] "BsmtExposure"  "BsmtFinType1"  "BsmtFinSF1"    "BsmtFinType2" 
+[37] "BsmtFinSF2"    "BsmtUnfSF"     "TotalBsmtSF"   "Heating"      
+[41] "HeatingQC"     "CentralAir"    "Electrical"    "X1stFlrSF"    
+[45] "X2ndFlrSF"     "LowQualFinSF"  "GrLivArea"     "BsmtFullBath" 
+[49] "BsmtHalfBath"  "FullBath"      "HalfBath"      "BedroomAbvGr" 
+[53] "KitchenAbvGr"  "KitchenQual"   "TotRmsAbvGrd"  "Functional"   
+[57] "Fireplaces"    "FireplaceQu"   "GarageType"    "GarageYrBlt"  
+[61] "GarageFinish"  "GarageCars"    "GarageArea"    "GarageQual"   
+[65] "GarageCond"    "PavedDrive"    "WoodDeckSF"    "OpenPorchSF"  
+[69] "EnclosedPorch" "X3SsnPorch"    "ScreenPorch"   "PoolArea"     
+[73] "PoolQC"        "Fence"         "MiscFeature"   "MiscVal"      
+[77] "MoSold"        "YrSold"        "SaleType"      "SaleCondition"
+[81] "SalePrice"    </code></pre>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-7-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-2"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>'data.frame':   1460 obs. of  81 variables:
+ $ Id           : int  1 2 3 4 5 6 7 8 9 10 ...
+ $ MSSubClass   : Factor w/ 15 levels "20","30","40",..: 6 1 6 7 6 5 1 6 5 15 ...
+ $ MSZoning     : chr  "RL" "RL" "RL" "RL" ...
+ $ LotFrontage  : int  65 80 68 60 84 85 75 NA 51 50 ...
+ $ LotArea      : int  8450 9600 11250 9550 14260 14115 10084 10382 6120 7420 ...
+ $ Street       : chr  "Pave" "Pave" "Pave" "Pave" ...
+ $ Alley        : chr  NA NA NA NA ...
+ $ LotShape     : chr  "Reg" "Reg" "IR1" "IR1" ...
+ $ LandContour  : chr  "Lvl" "Lvl" "Lvl" "Lvl" ...
+ $ Utilities    : chr  "AllPub" "AllPub" "AllPub" "AllPub" ...
+ $ LotConfig    : chr  "Inside" "FR2" "Inside" "Corner" ...
+ $ LandSlope    : chr  "Gtl" "Gtl" "Gtl" "Gtl" ...
+ $ Neighborhood : chr  "CollgCr" "Veenker" "CollgCr" "Crawfor" ...
+ $ Condition1   : chr  "Norm" "Feedr" "Norm" "Norm" ...
+ $ Condition2   : chr  "Norm" "Norm" "Norm" "Norm" ...
+ $ BldgType     : chr  "1Fam" "1Fam" "1Fam" "1Fam" ...
+ $ HouseStyle   : chr  "2Story" "1Story" "2Story" "2Story" ...
+ $ OverallQual  : Factor w/ 10 levels "1","2","3","4",..: 7 6 7 7 8 5 8 7 7 5 ...
+ $ OverallCond  : Factor w/ 9 levels "1","2","3","4",..: 5 8 5 5 5 5 5 6 5 6 ...
+ $ YearBuilt    : int  2003 1976 2001 1915 2000 1993 2004 1973 1931 1939 ...
+ $ YearRemodAdd : int  2003 1976 2002 1970 2000 1995 2005 1973 1950 1950 ...
+ $ RoofStyle    : chr  "Gable" "Gable" "Gable" "Gable" ...
+ $ RoofMatl     : chr  "CompShg" "CompShg" "CompShg" "CompShg" ...
+ $ Exterior1st  : chr  "VinylSd" "MetalSd" "VinylSd" "Wd Sdng" ...
+ $ Exterior2nd  : chr  "VinylSd" "MetalSd" "VinylSd" "Wd Shng" ...
+ $ MasVnrType   : chr  "BrkFace" "None" "BrkFace" "None" ...
+ $ MasVnrArea   : int  196 0 162 0 350 0 186 240 0 0 ...
+ $ ExterQual    : chr  "Gd" "TA" "Gd" "TA" ...
+ $ ExterCond    : chr  "TA" "TA" "TA" "TA" ...
+ $ Foundation   : chr  "PConc" "CBlock" "PConc" "BrkTil" ...
+ $ BsmtQual     : chr  "Gd" "Gd" "Gd" "TA" ...
+ $ BsmtCond     : chr  "TA" "TA" "TA" "Gd" ...
+ $ BsmtExposure : chr  "No" "Gd" "Mn" "No" ...
+ $ BsmtFinType1 : chr  "GLQ" "ALQ" "GLQ" "ALQ" ...
+ $ BsmtFinSF1   : int  706 978 486 216 655 732 1369 859 0 851 ...
+ $ BsmtFinType2 : chr  "Unf" "Unf" "Unf" "Unf" ...
+ $ BsmtFinSF2   : int  0 0 0 0 0 0 0 32 0 0 ...
+ $ BsmtUnfSF    : int  150 284 434 540 490 64 317 216 952 140 ...
+ $ TotalBsmtSF  : int  856 1262 920 756 1145 796 1686 1107 952 991 ...
+ $ Heating      : chr  "GasA" "GasA" "GasA" "GasA" ...
+ $ HeatingQC    : chr  "Ex" "Ex" "Ex" "Gd" ...
+ $ CentralAir   : chr  "Y" "Y" "Y" "Y" ...
+ $ Electrical   : chr  "SBrkr" "SBrkr" "SBrkr" "SBrkr" ...
+ $ X1stFlrSF    : int  856 1262 920 961 1145 796 1694 1107 1022 1077 ...
+ $ X2ndFlrSF    : int  854 0 866 756 1053 566 0 983 752 0 ...
+ $ LowQualFinSF : int  0 0 0 0 0 0 0 0 0 0 ...
+ $ GrLivArea    : int  1710 1262 1786 1717 2198 1362 1694 2090 1774 1077 ...
+ $ BsmtFullBath : int  1 0 1 1 1 1 1 1 0 1 ...
+ $ BsmtHalfBath : int  0 1 0 0 0 0 0 0 0 0 ...
+ $ FullBath     : int  2 2 2 1 2 1 2 2 2 1 ...
+ $ HalfBath     : int  1 0 1 0 1 1 0 1 0 0 ...
+ $ BedroomAbvGr : int  3 3 3 3 4 1 3 3 2 2 ...
+ $ KitchenAbvGr : int  1 1 1 1 1 1 1 1 2 2 ...
+ $ KitchenQual  : chr  "Gd" "TA" "Gd" "Gd" ...
+ $ TotRmsAbvGrd : int  8 6 6 7 9 5 7 7 8 5 ...
+ $ Functional   : chr  "Typ" "Typ" "Typ" "Typ" ...
+ $ Fireplaces   : int  0 1 1 1 1 0 1 2 2 2 ...
+ $ FireplaceQu  : chr  NA "TA" "TA" "Gd" ...
+ $ GarageType   : chr  "Attchd" "Attchd" "Attchd" "Detchd" ...
+ $ GarageYrBlt  : int  2003 1976 2001 1998 2000 1993 2004 1973 1931 1939 ...
+ $ GarageFinish : chr  "RFn" "RFn" "RFn" "Unf" ...
+ $ GarageCars   : int  2 2 2 3 3 2 2 2 2 1 ...
+ $ GarageArea   : int  548 460 608 642 836 480 636 484 468 205 ...
+ $ GarageQual   : chr  "TA" "TA" "TA" "TA" ...
+ $ GarageCond   : chr  "TA" "TA" "TA" "TA" ...
+ $ PavedDrive   : chr  "Y" "Y" "Y" "Y" ...
+ $ WoodDeckSF   : int  0 298 0 0 192 40 255 235 90 0 ...
+ $ OpenPorchSF  : int  61 0 42 35 84 30 57 204 0 4 ...
+ $ EnclosedPorch: int  0 0 0 272 0 0 0 228 205 0 ...
+ $ X3SsnPorch   : int  0 0 0 0 0 320 0 0 0 0 ...
+ $ ScreenPorch  : int  0 0 0 0 0 0 0 0 0 0 ...
+ $ PoolArea     : int  0 0 0 0 0 0 0 0 0 0 ...
+ $ PoolQC       : chr  NA NA NA NA ...
+ $ Fence        : chr  NA NA NA NA ...
+ $ MiscFeature  : chr  NA NA NA NA ...
+ $ MiscVal      : int  0 0 0 0 0 700 0 350 0 0 ...
+ $ MoSold       : int  2 5 9 2 12 10 8 11 4 1 ...
+ $ YrSold       : int  2008 2007 2008 2006 2008 2009 2007 2009 2008 2008 ...
+ $ SaleType     : chr  "WD" "WD" "WD" "WD" ...
+ $ SaleCondition: chr  "Normal" "Normal" "Normal" "Abnorml" ...
+ $ SalePrice    : int  208500 181500 223500 140000 250000 143000 307000 200000 129900 118000 ...</code></pre>
+</div>
+</div>
+<section id="valeurs-manquantes" class="level2 page-columns page-full" data-number="2.1"><h2 data-number="2.1" data-anchor-id="valeurs-manquantes">
+<span class="header-section-number">2.1</span> valeurs manquantes ?</h2>
+<section id="observation" class="level3 page-columns page-full" data-number="2.1.1"><h3 data-number="2.1.1" data-anchor-id="observation">
+<span class="header-section-number">2.1.1</span> observation</h3>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-9-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-3"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-9-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display column-page-inset-right">
+<div>
+<div id="zdzinhqokx" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#zdzinhqokx table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#zdzinhqokx thead, #zdzinhqokx tbody, #zdzinhqokx tfoot, #zdzinhqokx tr, #zdzinhqokx td, #zdzinhqokx th {
+  border-style: none;
+}
+
+#zdzinhqokx p {
+  margin: 0;
+  padding: 0;
+}
+
+#zdzinhqokx .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 3px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#zdzinhqokx .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#zdzinhqokx .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#zdzinhqokx .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 3px;
+  border-top-color: #FFFFFF;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#zdzinhqokx .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#zdzinhqokx .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#zdzinhqokx .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#zdzinhqokx .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #000000;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#zdzinhqokx .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#zdzinhqokx .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#zdzinhqokx .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#zdzinhqokx .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#zdzinhqokx .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#zdzinhqokx .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#zdzinhqokx .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zdzinhqokx .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#zdzinhqokx .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#zdzinhqokx .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#zdzinhqokx .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zdzinhqokx .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#zdzinhqokx .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zdzinhqokx .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#zdzinhqokx .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zdzinhqokx .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#zdzinhqokx .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#zdzinhqokx .gt_left {
+  text-align: left;
+}
+
+#zdzinhqokx .gt_center {
+  text-align: center;
+}
+
+#zdzinhqokx .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#zdzinhqokx .gt_font_normal {
+  font-weight: normal;
+}
+
+#zdzinhqokx .gt_font_bold {
+  font-weight: bold;
+}
+
+#zdzinhqokx .gt_font_italic {
+  font-style: italic;
+}
+
+#zdzinhqokx .gt_super {
+  font-size: 65%;
+}
+
+#zdzinhqokx .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#zdzinhqokx .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#zdzinhqokx .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#zdzinhqokx .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#zdzinhqokx .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#zdzinhqokx .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#zdzinhqokx .gt_indent_5 {
+  text-indent: 25px;
+}
+</style>
+<table class="gt_table table table-sm table-striped small" data-quarto-postprocess="true" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead><tr class="header gt_col_headings">
+<th id="variables" class="gt_col_heading gt_columns_bottom_border gt_left" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">variables</th>
+<th id="missing" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">missing</th>
+<th id="%" class="gt_col_heading gt_columns_bottom_border gt_right" data-quarto-table-cell-role="th" style="font-weight: bold" scope="col">%</th>
+</tr></thead>
+<tbody class="gt_table_body">
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">PoolQC</td>
+<td class="gt_row gt_right" headers="missing">1453</td>
+<td class="gt_row gt_right" headers="%">100</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">MiscFeature</td>
+<td class="gt_row gt_right" headers="missing">1406</td>
+<td class="gt_row gt_right" headers="%">96</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">Alley</td>
+<td class="gt_row gt_right" headers="missing">1369</td>
+<td class="gt_row gt_right" headers="%">94</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">Fence</td>
+<td class="gt_row gt_right" headers="missing">1179</td>
+<td class="gt_row gt_right" headers="%">81</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">FireplaceQu</td>
+<td class="gt_row gt_right" headers="missing">690</td>
+<td class="gt_row gt_right" headers="%">47</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">LotFrontage</td>
+<td class="gt_row gt_right" headers="missing">259</td>
+<td class="gt_row gt_right" headers="%">18</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">GarageType</td>
+<td class="gt_row gt_right" headers="missing">81</td>
+<td class="gt_row gt_right" headers="%">6</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">GarageYrBlt</td>
+<td class="gt_row gt_right" headers="missing">81</td>
+<td class="gt_row gt_right" headers="%">6</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">GarageFinish</td>
+<td class="gt_row gt_right" headers="missing">81</td>
+<td class="gt_row gt_right" headers="%">6</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">GarageQual</td>
+<td class="gt_row gt_right" headers="missing">81</td>
+<td class="gt_row gt_right" headers="%">6</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">GarageCond</td>
+<td class="gt_row gt_right" headers="missing">81</td>
+<td class="gt_row gt_right" headers="%">6</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">BsmtExposure</td>
+<td class="gt_row gt_right" headers="missing">38</td>
+<td class="gt_row gt_right" headers="%">3</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">BsmtFinType2</td>
+<td class="gt_row gt_right" headers="missing">38</td>
+<td class="gt_row gt_right" headers="%">3</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">BsmtQual</td>
+<td class="gt_row gt_right" headers="missing">37</td>
+<td class="gt_row gt_right" headers="%">3</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">BsmtCond</td>
+<td class="gt_row gt_right" headers="missing">37</td>
+<td class="gt_row gt_right" headers="%">3</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">BsmtFinType1</td>
+<td class="gt_row gt_right" headers="missing">37</td>
+<td class="gt_row gt_right" headers="%">3</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">MasVnrType</td>
+<td class="gt_row gt_right" headers="missing">8</td>
+<td class="gt_row gt_right" headers="%">1</td>
+</tr>
+<tr class="even">
+<td class="gt_row gt_left" headers="variables">MasVnrArea</td>
+<td class="gt_row gt_right" headers="missing">8</td>
+<td class="gt_row gt_right" headers="%">1</td>
+</tr>
+<tr class="odd">
+<td class="gt_row gt_left" headers="variables">Electrical</td>
+<td class="gt_row gt_right" headers="missing">1</td>
+<td class="gt_row gt_right" headers="%">0</td>
+</tr>
+</tbody>
+<tfoot class="gt_sourcenotes"><tr class="even">
+<td colspan="3" class="gt_sourcenote">**@bineneothniel.tra<br>
+</td>
+</tr></tfoot>
+</table>
+</div>
+</div>
+</div>
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-10-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-4"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-10-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-11-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-5"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-11-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-12-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-6"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-12-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<p>on observe que certaines variables ont des valeurs manquantes qui sont liées</p>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-13-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-7"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-13-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section></section></section><section id="visualisation-des-données" class="level1 page-columns page-full" data-number="3"><h1 data-number="3">
+<span class="header-section-number">3</span> Visualisation des données</h1>
+<section id="variable-cible-saleprice" class="level2 page-columns page-full" data-number="3.1"><h2 data-number="3.1" data-anchor-id="variable-cible-saleprice">
+<span class="header-section-number">3.1</span> Variable cible (SalePrice)</h2>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+  34900  129975  163000  180921  214000  755000 </code></pre>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-15-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-8"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-15-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-16-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-9"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-16-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-17-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-10"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-17-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="exemple-de-variables-qualitatives" class="level2 page-columns page-full" data-number="3.2"><h2 data-number="3.2" data-anchor-id="exemple-de-variables-qualitatives">
+<span class="header-section-number">3.2</span> exemple de Variables qualitatives</h2>
+<section id="mssubclass" class="level3 page-columns page-full" data-number="3.2.1"><h3 data-number="3.2.1" data-anchor-id="mssubclass">
+<span class="header-section-number">3.2.1</span> MSSubClass</h3>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "il y a 15 modalités"</code></pre>
+</div>
+</div>
+<section id="distribution" class="level4 page-columns page-full"><h4 data-anchor-id="distribution">distribution</h4>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-19-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-11"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-19-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-20-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-12"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-20-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-21-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-13"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-21-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-22-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-14"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="lien-avec-la-variable-cible" class="level4 page-columns page-full"><h4 data-anchor-id="lien-avec-la-variable-cible">lien avec la variable cible</h4>
+<div>
+
+</div>
+<div class="cell column-screen-inset-shaded quarto-layout-panel" data-layout-nrow="1">
+<div class="quarto-layout-row">
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<p><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-23-1.png" class="lightbox" data-gallery="quarto-lightbox-gallery-15"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<p><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-23-2.png" class="lightbox" data-gallery="quarto-lightbox-gallery-16"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-23-2.png" class="img-fluid" width="672"></a></p>
+</div>
+<div class="quarto-layout-cell" style="flex-basis: 33.3%;justify-content: center;">
+<p><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-23-3.png" class="lightbox" data-gallery="quarto-lightbox-gallery-17"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-23-3.png" class="img-fluid" width="672"></a></p>
+</div>
+</div>
+</div>
+</section></section></section><section id="exemple-de-variables-quantitatives" class="level2 page-columns page-full" data-number="3.3"><h2 data-number="3.3" data-anchor-id="exemple-de-variables-quantitatives">
+<span class="header-section-number">3.3</span> exemple de Variables quantitatives</h2>
+<section id="lotfrontage" class="level3 page-columns page-full" data-number="3.3.1"><h3 data-number="3.3.1" data-anchor-id="lotfrontage">
+<span class="header-section-number">3.3.1</span> LotFrontage</h3>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-24-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-18"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-25-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-19"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-26-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-20"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   1300    7554    9478   10517   11602  215245 </code></pre>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-28-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-21"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-28-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-29-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-22"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-29-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-30-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-23"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-30-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-31-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-24"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-31-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-32-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-25"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-32-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+</section><section id="yearbuilt" class="level3 page-columns page-full" data-number="3.3.2"><h3 data-number="3.3.2" data-anchor-id="yearbuilt">
+<span class="header-section-number">3.3.2</span> YearBuilt</h3>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-33-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-26"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-33-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-34-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-27"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-34-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell page-columns page-full">
+<div class="cell-output-display page-columns page-full">
+<div class="page-columns page-full">
+<figure class="figure page-columns page-full"><p class="page-columns page-full"><a href="01_feauture_engineering_files/figure-html/unnamed-chunk-35-1.png" class="lightbox page-columns page-full" data-gallery="quarto-lightbox-gallery-28"><img src="01_feauture_engineering_files/figure-html/unnamed-chunk-35-1.png" class="img-fluid figure-img column-page-inset-right" width="672"></a></p>
+</figure>
+</div>
+</div>
+</div>
+<p>```</p>
+</section></section></section></main><!-- /main column --><script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const disableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'prefetch';
+    }
+  }
+  const enableStylesheet = (stylesheets) => {
+    for (let i=0; i < stylesheets.length; i++) {
+      const stylesheet = stylesheets[i];
+      stylesheet.rel = 'stylesheet';
+    }
+  }
+  const manageTransitions = (selector, allowTransitions) => {
+    const els = window.document.querySelectorAll(selector);
+    for (let i=0; i < els.length; i++) {
+      const el = els[i];
+      if (allowTransitions) {
+        el.classList.remove('notransition');
+      } else {
+        el.classList.add('notransition');
+      }
+    }
+  }
+  const toggleGiscusIfUsed = (isAlternate, darkModeDefault) => {
+    const baseTheme = document.querySelector('#giscus-base-theme')?.value ?? 'light';
+    const alternateTheme = document.querySelector('#giscus-alt-theme')?.value ?? 'dark';
+    let newTheme = '';
+    if(darkModeDefault) {
+      newTheme = isAlternate ? baseTheme : alternateTheme;
+    } else {
+      newTheme = isAlternate ? alternateTheme : baseTheme;
+    }
+    const changeGiscusTheme = () => {
+      // From: https://github.com/giscus/giscus/issues/336
+      const sendMessage = (message) => {
+        const iframe = document.querySelector('iframe.giscus-frame');
+        if (!iframe) return;
+        iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+      }
+      sendMessage({
+        setConfig: {
+          theme: newTheme
+        }
+      });
+    }
+    const isGiscussLoaded = window.document.querySelector('iframe.giscus-frame') !== null;
+    if (isGiscussLoaded) {
+      changeGiscusTheme();
+    }
+  }
+  const toggleColorMode = (alternate) => {
+    // Switch the stylesheets
+    const alternateStylesheets = window.document.querySelectorAll('link.quarto-color-scheme.quarto-color-alternate');
+    manageTransitions('#quarto-margin-sidebar .nav-link', false);
+    if (alternate) {
+      enableStylesheet(alternateStylesheets);
+      for (const sheetNode of alternateStylesheets) {
+        if (sheetNode.id === "quarto-bootstrap") {
+          toggleBodyColorMode(sheetNode);
+        }
+      }
+    } else {
+      disableStylesheet(alternateStylesheets);
+      toggleBodyColorPrimary();
+    }
+    manageTransitions('#quarto-margin-sidebar .nav-link', true);
+    // Switch the toggles
+    const toggles = window.document.querySelectorAll('.quarto-color-scheme-toggle');
+    for (let i=0; i < toggles.length; i++) {
+      const toggle = toggles[i];
+      if (toggle) {
+        if (alternate) {
+          toggle.classList.add("alternate");     
+        } else {
+          toggle.classList.remove("alternate");
+        }
+      }
+    }
+    // Hack to workaround the fact that safari doesn't
+    // properly recolor the scrollbar when toggling (#1455)
+    if (navigator.userAgent.indexOf('Safari') > 0 && navigator.userAgent.indexOf('Chrome') == -1) {
+      manageTransitions("body", false);
+      window.scrollTo(0, 1);
+      setTimeout(() => {
+        window.scrollTo(0, 0);
+        manageTransitions("body", true);
+      }, 40);  
+    }
+  }
+  const isFileUrl = () => { 
+    return window.location.protocol === 'file:';
+  }
+  const hasAlternateSentinel = () => {  
+    let styleSentinel = getColorSchemeSentinel();
+    if (styleSentinel !== null) {
+      return styleSentinel === "alternate";
+    } else {
+      return false;
+    }
+  }
+  const setStyleSentinel = (alternate) => {
+    const value = alternate ? "alternate" : "default";
+    if (!isFileUrl()) {
+      window.localStorage.setItem("quarto-color-scheme", value);
+    } else {
+      localAlternateSentinel = value;
+    }
+  }
+  const getColorSchemeSentinel = () => {
+    if (!isFileUrl()) {
+      const storageValue = window.localStorage.getItem("quarto-color-scheme");
+      return storageValue != null ? storageValue : localAlternateSentinel;
+    } else {
+      return localAlternateSentinel;
+    }
+  }
+  const darkModeDefault = false;
+  let localAlternateSentinel = darkModeDefault ? 'alternate' : 'default';
+  // Dark / light mode switch
+  window.quartoToggleColorScheme = () => {
+    // Read the current dark / light value 
+    let toAlternate = !hasAlternateSentinel();
+    toggleColorMode(toAlternate);
+    setStyleSentinel(toAlternate);
+    toggleGiscusIfUsed(toAlternate, darkModeDefault);
+  };
+  // Ensure there is a toggle, if there isn't float one in the top right
+  if (window.document.querySelector('.quarto-color-scheme-toggle') === null) {
+    const a = window.document.createElement('a');
+    a.classList.add('top-right');
+    a.classList.add('quarto-color-scheme-toggle');
+    a.href = "";
+    a.onclick = function() { try { window.quartoToggleColorScheme(); } catch {} return false; };
+    const i = window.document.createElement("i");
+    i.classList.add('bi');
+    a.appendChild(i);
+    window.document.body.appendChild(a);
+  }
+  // Switch to dark mode if need be
+  if (hasAlternateSentinel()) {
+    toggleColorMode(true);
+  } else {
+    toggleColorMode(false);
+  }
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      // TODO in 1.5, we should make sure this works without a callout special case
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      const annoteTargets = window.document.querySelectorAll('.code-annotation-anchor');
+      for (let i=0; i<annoteTargets.length; i++) {
+        const annoteTarget = annoteTargets[i];
+        const targetCell = annoteTarget.getAttribute("data-target-cell");
+        const targetAnnotation = annoteTarget.getAttribute("data-target-annotation");
+        const contentFn = () => {
+          const content = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          if (content) {
+            const tipContent = content.cloneNode(true);
+            tipContent.classList.add("code-annotation-tip-content");
+            return tipContent.outerHTML;
+          }
+        }
+        const config = {
+          allowHTML: true,
+          content: contentFn,
+          onShow: (instance) => {
+            selectCodeLines(instance.reference);
+            instance.reference.classList.add('code-annotation-active');
+            window.tippy.hideAll();
+          },
+          onHide: (instance) => {
+            unselectCodeLines();
+            instance.reference.classList.remove('code-annotation-active');
+          },
+          maxWidth: 300,
+          delay: [50, 0],
+          duration: [200, 0],
+          offset: [5, 10],
+          arrow: true,
+          appendTo: function(el) {
+            return el.parentElement.parentElement.parentElement;
+          },
+          interactive: true,
+          interactiveBorder: 10,
+          theme: 'quarto',
+          placement: 'right',
+          popperOptions: {
+            modifiers: [
+            {
+              name: 'flip',
+              options: {
+                flipVariations: false, // true by default
+                allowedAutoPlacements: ['right'],
+                fallbackPlacements: ['right', 'top', 'top-start', 'top-end', 'bottom', 'bottom-start', 'bottom-end', 'left'],
+              },
+            },
+            {
+              name: 'preventOverflow',
+              options: {
+                mainAxis: false,
+                altAxis: false
+              }
+            }
+            ]        
+          }      
+        };
+        window.tippy(annoteTarget, config); 
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+<script>var lightboxQuarto = GLightbox({"openEffect":"zoom","closeEffect":"zoom","selector":".lightbox","descPosition":"bottom","loop":false});
+window.onload = () => {
+  lightboxQuarto.on('slide_before_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    const href = trigger.getAttribute('href');
+    if (href !== null) {
+      const imgEl = window.document.querySelector(`a[href="${href}"] img`);
+      if (imgEl !== null) {
+        const srcAttr = imgEl.getAttribute("src");
+        if (srcAttr && srcAttr.startsWith("data:")) {
+          slideConfig.href = srcAttr;
+        }
+      }
+    } 
+  });
+
+  lightboxQuarto.on('slide_after_load', (data) => {
+    const { slideIndex, slideNode, slideConfig, player, trigger } = data;
+    if (window.Quarto?.typesetMath) {
+      window.Quarto.typesetMath(slideNode);
+    }
+  });
+
+};
+          </script>
+
+
+<script src="01_feauture_engineering_files/libs/quarto-html/zenscroll-min.js"></script>
+</body></html>
