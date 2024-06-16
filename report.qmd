@@ -61,7 +61,7 @@ comments:
   hypothesis: 
     theme: clean
 editor_options: 
-  chunk_output_type: inline
+  chunk_output_type: console
 ---
 
 ```{r}
@@ -78,8 +78,6 @@ library(ggplot2)
 library(labelled)
 
 library(xgboost)
-
-
 
 ```
 
@@ -294,8 +292,6 @@ download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphi
 
 # model
 
-
-
 -   **Surface habitable (GrLivArea)** : La taille de l'espace de vie au-dessus du sol.
 
 -   **Nombre de chambres (BedroomAbvGr)** : Le nombre de chambres au-dessus du sol.
@@ -349,7 +345,6 @@ download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphi
 -   **Qualité de la cuisine (KitchenQual)** : Une évaluation de la qualité de la cuisine.
 
 ### 6. **Autres Variables :**
-
 
 ```{r}
 library(MASS)  # Pour la fonction stepAIC
@@ -411,7 +406,7 @@ data <- data %>%  select( - c(Id, YrSold) )
 
 ## MSSubClass
 
-```r
+``` r
 data <- data %>% mutate(
         MSSubClass = ifelse(MSSubClass == 150, mode(MSSubClass), MSSubClass ),
         MSZoning = ifelse(MSSubClass == NA, mode(MSZoning), MSZoning ),
@@ -431,12 +426,11 @@ data <- data %>% mutate(
 )
 ```
 
+# MasVnrArea masvarty
 
-# MasVnrArea  masvarty
 ```{r}
 unique(data$MasVnrType)
 ```
-
 
 ```{r}
 
@@ -450,10 +444,7 @@ data <- data %>%
   ))
 ```
 
-
 # traitement de données
-
-
 
 ```{r}
 ## Convertir les variables à étiquettes en chaîne de charactère
@@ -534,10 +525,9 @@ data <- data %>%
 
 ```
 
-
 ## discretisation des variables numériques
 
-```r
+``` r
 
 # GarageArea
 data <- data %>%
@@ -648,7 +638,6 @@ data <- data %>%
     200 < WoodDeckSF  ~ ">200",
   ))
 
-
 ```
 
 ### encore une discrétisation de variable numérique \[Yes, No \]
@@ -718,7 +707,6 @@ data <- data %>%
 missing_heatmap(data)
 ```
 
-
 #### Missforest for other NA input
 
 Missforest permet d'imputer les valeurs manquantes dans les jeux de données de type **mixte** en utilisant les **forêts aléatoires** pour prédire les valeurs manquantes de manière itérative et non paramétrique, en tirant parti des relations entre les variables.
@@ -738,16 +726,13 @@ var_type_viz_1(data)
 
 ```
 
-
-
 ```{r}
 glimpse(data)
 ```
 
-
 ```{r}
 # Stocker les types initiaux pour chaque ligne
-types_lines <- lapply(data, function(line) sapply(line, class))
+# types_lines <- lapply(data, function(line) sapply(line, class))
 
 library(missForest)
 data.imp <- missForest(data, verbose = TRUE, maxiter = 4, ntree = 50, replace = FALSE)
@@ -785,7 +770,8 @@ data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
 
 data$MoSold <- as.character(data$MoSold)
 
-
+data <- data %>%
+  mutate(across(where(is.integer), as.numeric))
 
 var_type_viz_1(data)
 ```
@@ -817,6 +803,92 @@ missing_loliplot(data)
 missing_loliplot(data)
 ```
 
+# colinéarité
+
+# Matrice de corrélation 
+
+```{r}
+library(dplyr)
+library(igraph)
+
+
+par(mfrow=c(1,2))
+numerical_corelation(data, threshold = 0.6)
+
+```
+
+# Corrélations V de Cramer : 
+
+```{r}
+# Fonction pour créer la matrice des p-values
+create_chi2_pvalue_matrix <- function(data) {
+  
+  cat_data <- data %>%
+    mutate(across(where(is.character), as.factor)) %>%
+    select(where(is.factor ))
+  
+  cat_vars <- cat_data %>% colnames()
+  pvalue_matrix <- matrix(0, nrow = length(cat_vars), ncol = length(cat_vars), 
+                          dimnames = list(cat_vars, cat_vars))
+  
+  for (i in 1:length(cat_vars)) {
+    for (j in 1:length(cat_vars)) {
+      if (i != j) {
+        chi2_test <- chisq.test(table(cat_data[[i]], cat_data[[j]]))
+        
+        # Interprétation
+        
+        if (chi2_test$p.value < 0.05) {
+          cat("Nous rejetons H0, liaisons entre : ", cat_vars[i], "et ", cat_vars[j]," .\n") }
+          pvalue_matrix[i, j] <- chi2_test$p.value
+      }
+    }
+  }
+  
+  return(pvalue_matrix)
+}
+
+create_chi2_pvalue_matrix(data)
+```
+
+le V de Cramer est basé sur la statistique du chi-carré et varie de 0 à 1, où 0 indique aucune association et 1 indique une association parfaite.
+
+```{r}
+categorical_corelation(data, 0.7)
+```
+
+#  Analyse de la variance inflation factor (VIF)
+
+```{r}
+library(car)
+library(MASS)
+
+# Exemple de DataFrame avec des variables indépendantes et une variable dépendante
+df <- data.frame(
+  y = rnorm(100),
+  X1 = rnorm(100),
+  X2 = rnorm(100),
+  X3 = rnorm(100),
+  X4 = rnorm(100)
+)
+
+# Ajuster le modèle de régression linéaire initial
+model <- lm(y ~ ., data = df)
+
+# Calculer le VIF pour chaque variable
+vif_values <- vif(model)
+print(vif_values)
+
+# Suppression des variables avec un VIF élevé (> 5 ou > 10)
+while (any(vif_values > 5)) {
+  df <- df[, -which.max(vif_values)]
+  model <- lm(y ~ ., data = df)
+  vif_values <- vif(model)
+}
+
+print("Final model with reduced multicollinearity:")
+summary(model)
+```
 
 
 ```{r}
@@ -824,16 +896,17 @@ missing_loliplot(data)
 
 cleaned_train <- data[1:nrow(train), ]
 
-train$SalePrice = label
+cleaned_train$SalePrice = label
 
 cleaned_test <- data[(nrow(train) + 1):nrow(data), ]
+
 
 ```
 
 
 
 ```{r}
-modlin = lm(SalePrice ~ ., data = train)
+modlin = lm(SalePrice ~ ., data = cleaned_train)
 summary(modlin) # noter les p-valeurs
 
 
@@ -970,81 +1043,9 @@ data_onehot <- clean_names(data_onehot)
 
 ```
 
-# colinéarité
 
-```{r}
-cor_matrix <- cor(data_onehot, method = "pearson")
-high_cor_threshold <- 0.8
 
-# Find pairs of highly correlated variables
-high_cor_pairs <- which(abs(cor_matrix) > high_cor_threshold & abs(cor_matrix) < 1, arr.ind = TRUE)
 
-# Display highly correlated variable pairs
-todrop <- high_cor_pairs %>% 
-  data.frame() %>%
-  rownames_to_column("variables")
-
-data_fram <- data.frame(x = "1", y = "2")
-
-for (i in todrop$row){
-  for (j in todrop$col){
-    if ( i == j) {
-var_1 <- todrop %>% filter(row == i) %>% select(variables) %>% pull 
-var_2 <- todrop %>% filter(col == j) %>% select(variables) %>% pull 
-c_row <- c(var_1, var_2)
-data_fram <- rbind(data_fram, c_row )
-        
-    }
-  }
-}
-
-data_fram %>% distinct()
-```
-
-# un igraph des variables corrélées
-
-```{r}
-library(dplyr)
-library(igraph)
-
-cor_matrix <- cor(mtcars)
-threshold <- 0.9
-
-is_symmetric <- function(matrix) {
-  return(identical(matrix, t(matrix)))
-}
-
-is_symmetric(cor_matrix)
-
-adj_matrix <- abs(cor_matrix) > threshold
-
-# Remove self-loops (diagonal elements)
-diag(adj_matrix) <- 0
-
-is_symmetric(adj_matrix)
-
-# Create a graph from the adjacency matrix
-cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
-plot(cor_graph)
-
-# Identify connected components
-components <- clusters(cor_graph)
-
-# Extract the membership vector indicating component membership for each variable
-membership <- components$membership
-
-# Create a data frame to list the variables in each connected component
-connected_vars <- data.frame(variable = names(membership), component = membership)
-
-# Group and print the connected variables
-connected_groups <- connected_vars %>%
-  group_by(component) %>%
-  summarise(variables = paste(variable, collapse = ", "))
-
-# Print the connected groups
-print(connected_groups)
-
-```
 
 # Re-diviser les données
 
