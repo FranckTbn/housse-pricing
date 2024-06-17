@@ -860,7 +860,6 @@ missing_loliplot <- function(data){
 }
 
 
-
 missing_variables <- function(data){
   miss_data <- data %>%
     questionr::freq.na() %>%
@@ -1035,15 +1034,16 @@ data_information <- function(data) {
 }
 
 
+
 numerical_corelation <- function(data, threshold = 0.6){
   cor_matrix <- cor(data %>% select(where(is.numeric )))
   adj_matrix <- abs(cor_matrix) > threshold
   diag(adj_matrix) <- 0
   # Create a graph from the adjacency matrix
   cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
-  plot(cor_graph)
+  graph1 <- plot(cor_graph)
   
-  pairs(data %>% select(where(is.numeric )) )
+  graph2 <- pairs(data %>% select(where(is.numeric )) )
   
   # Identify connected components
   components <- components(cor_graph)
@@ -1057,10 +1057,14 @@ numerical_corelation <- function(data, threshold = 0.6){
   # Group and print the connected variables
   connected_groups <- connected_vars %>%
     group_by(component) %>%
-    summarise(variables = paste(variable, collapse = ", "))
+    summarise(variables = paste(variable, collapse = ", ")) %>%
+    filter(sapply(strsplit( variables, "\\s+"),  length) > 1)
   
-  # Print the connected groups
-  print(connected_groups)
+  return(list(
+    data = connected_groups,
+    graph1 = graph1,
+    graph2 = graph2
+  ))
   
 }
 
@@ -1077,6 +1081,7 @@ cramers_v <- function(x, y) {
   v <- sqrt(phi2 / min(r - 1, k - 1))
   return(v)
 }
+
 
 # Fonction pour créer la matrice des V de Cramer
 categorical_corelation <- function(data, threshold = 0.7) {
@@ -1102,7 +1107,7 @@ categorical_corelation <- function(data, threshold = 0.7) {
   diag(adj_matrix) <- 0
   # Create a graph from the adjacency matrix
   cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
-  plot(cor_graph)
+  graph1 <- plot(cor_graph)
   
   components <- components(cor_graph)
   
@@ -1118,10 +1123,39 @@ categorical_corelation <- function(data, threshold = 0.7) {
     summarise(variables = paste(variable, collapse = ", ")) %>%
     filter(sapply(strsplit( variables, "\\s+"),  length) > 1)
   
-  # Print the connected groups
-  return(list(data  = connected_groups ))
   
+  
+  return(list(
+    data = connected_groups,
+    graph1 = graph1
+  ))
   
 }
 
 
+create_chi2_pvalue_matrix <- function(data) {
+  
+  cat_data <- data %>%
+    mutate(across(where(is.character), as.factor)) %>%
+    select(where(is.factor ))
+  
+  cat_vars <- cat_data %>% colnames()
+  pvalue_matrix <- matrix(0, nrow = length(cat_vars), ncol = length(cat_vars), 
+                          dimnames = list(cat_vars, cat_vars))
+  
+  for (i in 1:length(cat_vars)) {
+    for (j in 1:length(cat_vars)) {
+      if (i != j) {
+        chi2_test <- chisq.test(table(cat_data[[i]], cat_data[[j]]))
+        
+        # Interprétation
+        
+        if (chi2_test$p.value < 0.05) {
+          cat("Nous rejetons H0, liaisons entre : ", cat_vars[i], "et ", cat_vars[j]," .\n") }
+        pvalue_matrix[i, j] <- chi2_test$p.value
+      }
+    }
+  }
+  
+  return(pvalue_matrix)
+}

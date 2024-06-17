@@ -1,28 +1,6 @@
 
-library(dplyr)
-  
-modele_1 = lm(SalePrice ~ Neighborhood +
-                MSSubClass +
-                MSZoning +
-                LotArea +
-                LotConfig +
-                Condition1 +
-                HouseStyle +
-                MasVnrType +
-                ExterQual +
-                BsmtQual +
-                OverallQual +
-                OverallCond + 
-                ExterQual +
-                GarageType +
-                GarageQual +
-                FireplaceQu +
-                KitchenQual +
-                housse_age +
-                garage_age +
-                remod_since,
-              data = cleaned_train)
-
+modele_1 = lm(SalePrice ~ ., data = cleaned_train)
+predict(modele_1, cleaned_test)
 
 summary(modele_1)
 
@@ -34,17 +12,13 @@ plot(modele_1)
 
 
 
-
-plot(modele_1)
-
-plot.res=function(x,y,titre="")
-{
-  plot(x,y,col="blue",ylab="Résidus",
+plot.res=function(modele_1,titre=""){
+  plot(predict(modele_1), residuals(modele_1), col="blue",ylab="Résidus",
        xlab="Valeurs predites",main=titre)
-  abline(h=0,col="green")
+  abline(h=0, col="green")
 }
 
-plot.res(predict(modele_1),residuals(modele_1))
+plot.res(modele_1)
 
 
 pairs(cleaned_train %>% select(where(is.numeric )) )
@@ -53,7 +27,7 @@ pairs(cleaned_train %>% select(where(is.numeric )) )
 
 library(broom)
 
-viz_model_1 <- function(model, n){
+viz_lm_model_1 <- function(model, n){
   model_summary <- tidy(model) %>%
     filter(term != "(Intercept)") %>%
     arrange(p.value) %>%
@@ -68,12 +42,37 @@ viz_model_1 <- function(model, n){
     theme_minimal()
 }
 
-viz_model_1(modele_1, 20)
+viz_lm_model_1(modele_1, 20)
 
 
 
-
-
+viz_rf_model_2 <- function(model){
+  p1 <- importance(model) %>%
+    data.frame() %>%
+    rownames_to_column("term") %>%
+    ggplot(aes(x = term, y = X.IncMSE)) +
+    geom_segment(aes(xend = term, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "random forest fearture importance",
+         x = "",
+         y = "%IncMSE") +
+    theme_minimal()
+  
+  p2 <- importance(model) %>%
+    data.frame() %>%
+    rownames_to_column("term") %>%
+    ggplot(aes(x = term, y = IncNodePurity)) +
+    geom_segment(aes(xend = term, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "random forest fearture importance",
+         x = "",
+         y = "IncNodePurity") +
+    theme_minimal()
+  
+  p1+p2
+}
 
 
 files <- data.frame(

@@ -61,7 +61,7 @@ comments:
   hypothesis: 
     theme: clean
 editor_options: 
-  chunk_output_type: console
+  chunk_output_type: inline
 ---
 
 ```{r}
@@ -91,7 +91,7 @@ label <- train$SalePrice
 Id <- test$Id
 
 a <- train %>% 
-  select(-SalePrice) %>%
+  dplyr::select(-SalePrice) %>%
   mutate( type = "train")
 
 b <- test %>%
@@ -286,9 +286,6 @@ var_quanti_viz_2(data = train, var = LotFrontage)
 var_cible_quanti(data = train, var = LotFrontage)
 ```
 
-```{r}
-download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphics-with-plotly.html")
-```
 
 # model
 
@@ -637,7 +634,6 @@ data <- data %>%
     0 < WoodDeckSF & WoodDeckSF <= 200 ~ "0-200",
     200 < WoodDeckSF  ~ ">200",
   ))
-
 ```
 
 ### encore une discrétisation de variable numérique \[Yes, No \]
@@ -749,7 +745,50 @@ write.csv(data.imp$ximp, file = "inputed_data.csv", row.names = FALSE)
 ```{r}
 data <- read.csv("inputed_data.csv", na.strings = "NA")
 
+```
 
+##  on enlève les madalités des variables cateégorielles et on les rempplace par des valeur manquantes qu'on va inputer à nouveau par la methode de miss forest.
+
+```{r}
+sum(is.na(data))
+```
+
+```{r}
+data <- data %>%
+  mutate(across(where(is.factor), as.character))
+
+cat_data <- data %>% select_if(is.character)
+
+cat_vars <- cat_data %>% colnames()
+
+for (i in cat_vars) {
+      data1 <- data[1:nrow(train), ]
+      levels1 <- data1[[i]] %>% unique() %>% as.character()
+      
+      data2 <-  data[(nrow(train) + 1):nrow(data) , ]
+      
+      levels2 <- data2[[i]] %>% unique() %>% as.character()
+      
+      # Identifier les modalités communes
+      common_levels <- intersect(levels1, levels2)
+      factor <- data[[i]] %>% as.character()
+      data[[i]] <- ifelse( !factor %in% common_levels, NA, factor   ) 
+}
+
+ 
+```
+
+```{r}
+sum(is.na(data))
+```
+
+```{r}
+missing_loliplot(data)
+```
+
+
+
+```{r}
 data$MSSubClass <- as.character(data$MSSubClass)
 data$OverallQual <- as.character(data$OverallQual)
 data$OverallCond <- as.character(data$OverallCond)
@@ -771,128 +810,127 @@ data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
 data$MoSold <- as.character(data$MoSold)
 
 data <- data %>%
-  mutate(across(where(is.integer), as.numeric))
+  mutate(across(where(is.integer), as.numeric)) %>%
+  mutate(across(where(is.character), as.factor))
 
 var_type_viz_1(data)
 ```
 
-
-
 ```{r}
-#| echo: false
-#| layout-ncol: 2
-#| fig-cap: "missing"
-#| fig-subcap: 
-#|   - "train"
-#|   - "test"
-
-missing_variables(data)
-
-data_information(data)
+data.imp <- missForest(data, verbose = TRUE, maxiter = 4, ntree = 50, replace = FALSE)
 ```
 
-```{r}
-#| echo: false
-#| layout-ncol: 2
-#| fig-cap: "missing"
-#| fig-subcap: 
-#|   - "train"
-#|   - "test"
 
-missing_loliplot(data)
-missing_loliplot(data)
+```{r}
+data <- data.imp$ximp
 ```
 
 # colinéarité
 
-# Matrice de corrélation 
-
+# Matrice de corrélation
 ```{r}
 library(dplyr)
 library(igraph)
+tools <- numerical_corelation(data, 0.4)
+tools
+```
 
 
-par(mfrow=c(1,2))
-numerical_corelation(data, threshold = 0.6)
+
+-   **%IncMSE** (Mean Decrease in Accuracy) : Mesure combien l'erreur du modèle augmente lorsqu'une variable est permutée. Plus la valeur est élevée, plus la variable est importante.
+
+-   **IncNodePurity** (Mean Decrease in Gini) : Mesure la réduction totale de l'impureté de Gini obtenue en utilisant cette variable dans le modèle. Plus la valeur est élevée, plus la variable est importante.
+
+```{r}
+library(randomForest)
+train_f <- function(data){
+  cleaned_train <- data[1:nrow(train), ]
+  cleaned_train$SalePrice = label
+  
+  cleaned_train
+}
+
+# i in 1 : n
+i <- 1
+n <- nrow(tools$data)
+
+var <- strsplit( tools$data[1,2] %>% pull, "\\s+")[[1]]
+var <- gsub(",$", "", var)
+var <- c(var, "SalePrice")
+df <- train_f(data) %>% select(var)
+
+model <- randomForest(SalePrice ~ ., data = df, importance = TRUE)
+
+viz_rf_model_2(model)
 
 ```
 
-# Corrélations V de Cramer : 
+```{r}
+data <- data %>% select(-c(X1stFlrSF, X2ndFlrSF))
+```
+```{r}
+data <- data %>% select(-c(TotalBsmtSF,	LotFrontage, 	BsmtFinSF1, BsmtUnfSF, GarageArea))
+```
+
+
+
+# Corrélations V de Cramer :
 
 ```{r}
 # Fonction pour créer la matrice des p-values
-create_chi2_pvalue_matrix <- function(data) {
-  
-  cat_data <- data %>%
-    mutate(across(where(is.character), as.factor)) %>%
-    select(where(is.factor ))
-  
-  cat_vars <- cat_data %>% colnames()
-  pvalue_matrix <- matrix(0, nrow = length(cat_vars), ncol = length(cat_vars), 
-                          dimnames = list(cat_vars, cat_vars))
-  
-  for (i in 1:length(cat_vars)) {
-    for (j in 1:length(cat_vars)) {
-      if (i != j) {
-        chi2_test <- chisq.test(table(cat_data[[i]], cat_data[[j]]))
-        
-        # Interprétation
-        
-        if (chi2_test$p.value < 0.05) {
-          cat("Nous rejetons H0, liaisons entre : ", cat_vars[i], "et ", cat_vars[j]," .\n") }
-          pvalue_matrix[i, j] <- chi2_test$p.value
-      }
-    }
-  }
-  
-  return(pvalue_matrix)
-}
-
-create_chi2_pvalue_matrix(data)
+# create_chi2_pvalue_matrix(data)
 ```
 
 le V de Cramer est basé sur la statistique du chi-carré et varie de 0 à 1, où 0 indique aucune association et 1 indique une association parfaite.
 
 ```{r}
-categorical_corelation(data, 0.7)
+tools <- categorical_corelation(data, 0.65)
+tools
 ```
 
-#  Analyse de la variance inflation factor (VIF)
-
 ```{r}
-library(car)
-library(MASS)
-
-# Exemple de DataFrame avec des variables indépendantes et une variable dépendante
-df <- data.frame(
-  y = rnorm(100),
-  X1 = rnorm(100),
-  X2 = rnorm(100),
-  X3 = rnorm(100),
-  X4 = rnorm(100)
-)
-
-# Ajuster le modèle de régression linéaire initial
-model <- lm(y ~ ., data = df)
-
-# Calculer le VIF pour chaque variable
-vif_values <- vif(model)
-print(vif_values)
-
-# Suppression des variables avec un VIF élevé (> 5 ou > 10)
-while (any(vif_values > 5)) {
-  df <- df[, -which.max(vif_values)]
-  model <- lm(y ~ ., data = df)
-  vif_values <- vif(model)
+library(randomForest)
+train_f <- function(data){
+  cleaned_train <- data[1:nrow(train), ]
+  cleaned_train$SalePrice = label
+  
+  cleaned_train
 }
 
-print("Final model with reduced multicollinearity:")
-summary(model)
+# i in 1 : n
+i <- 1
+n <- nrow(tools$data)
+
+var <- strsplit( tools$data[1,2] %>% pull, "\\s+")[[1]]
+var <- gsub(",$", "", var)
+var <- c(var, "SalePrice")
+df <- train_f(data) %>% select(var)
+
+model <- randomForest(SalePrice ~ ., data = df, importance = TRUE)
+
+viz_rf_model_2(model)
+
+```
+
+```{r}
+data <- data %>% select(-c(GarageType, BldgType, HouseStyle, MSZoning, ExterQual, Exterior2nd, BsmtFinSF2, GarageCond, garage_age))
+```
+
+
+
+
+# Analyse de la variance inflation factor (VIF)
+
+```{r}
+data <- data %>% select(-type)
+```
+```{r}
+data <- data %>% select(-FullBath)
 ```
 
 
 ```{r}
-# data %>% select(-type)
+
 
 cleaned_train <- data[1:nrow(train), ]
 
@@ -903,11 +941,10 @@ cleaned_test <- data[(nrow(train) + 1):nrow(data), ]
 
 ```
 
-
-
 ```{r}
 modlin = lm(SalePrice ~ ., data = cleaned_train)
 summary(modlin) # noter les p-valeurs
+
 
 
 plot.res=function(x,y,titre="")
@@ -918,7 +955,7 @@ abline(h=0, col="green")
 }
 
 
-#Residus
+
 res=residuals(modlin)
 #Regroupement des graphiques sur la meme page
 par(mfrow=c(1,2))
@@ -935,33 +972,9 @@ par(mfrow=c(1,1))
 plot.res(predict(modlin),res)
 ```
 
-```{r}
-
-levels(train$MSSubClass) 
-```
-
-```{r}
-test <- test %>%
-  mutate( MSSubClass = ifelse(MSSubClass == 150, NA, MSSubClass))
-
-levels(test$MSSubClass) 
-```
-
-```{r}
- library(missForest)
 
 
 
-test.mod <- missForest(test, verbose = TRUE, maxiter = 4, ntree = 30, replace = FALSE)
-
-output <- data.frame(
-  Id = Id,
-  SalePrice = predict(modlin, test)
-  )
-
-write.csv(output, file = "data_AIC.csv", row.names = FALSE)
-
-```
 
 # Nouvelle paramétrisation
 
@@ -1042,10 +1055,6 @@ library(janitor)
 data_onehot <- clean_names(data_onehot)
 
 ```
-
-
-
-
 
 # Re-diviser les données
 
