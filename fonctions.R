@@ -21,7 +21,7 @@ library(RColorBrewer) # forbeautifulcolor palette
 library(ggpubr) # fonction gghistogram
 
 library(highcharter)
-
+graphics.off()
 
 
 # Couleurs du thème
@@ -816,7 +816,7 @@ missing_viz_1 <- function(data, class){
   var_name <- as_label(enquo(class))
   
     data <- data %>%
-      select({{class}}) %>%
+      dplyr::select({{class}}) %>%
       mutate(
         observation = ifelse(is.na({{class}}), "missing", "value")
       )
@@ -856,7 +856,7 @@ missing_loliplot <- function(data){
   
   
   missing <- miss_data %>% distinct(variables) %>% as.vector()
-  gg_miss_var( data %>% select(missing$variables) )
+  gg_miss_var( data %>% dplyr::select(missing$variables) )
 }
 
 
@@ -893,7 +893,7 @@ missing_heatmap <- function(data){
   missing <- miss_data %>% distinct(variables) %>% as.vector()
   
   # Convert data to a matrix
-  data_matrix <- as.matrix( data %>% select(missing$variables) )
+  data_matrix <- as.matrix( data %>% dplyr::select(missing$variables) )
   
   # Create a logical matrix indicating missing values
   missing_data <- is.na(data_matrix)
@@ -1036,14 +1036,11 @@ data_information <- function(data) {
 
 
 numerical_corelation <- function(data, threshold = 0.6){
-  cor_matrix <- cor(data %>% select(where(is.numeric )))
+  cor_matrix <- cor(data %>% dplyr::select(where(is.numeric )))
   adj_matrix <- abs(cor_matrix) > threshold
   diag(adj_matrix) <- 0
   # Create a graph from the adjacency matrix
   cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
-  graph1 <- plot(cor_graph)
-  
-  graph2 <- pairs(data %>% select(where(is.numeric )) )
   
   # Identify connected components
   components <- components(cor_graph)
@@ -1059,12 +1056,22 @@ numerical_corelation <- function(data, threshold = 0.6){
     group_by(component) %>%
     summarise(variables = paste(variable, collapse = ", ")) %>%
     filter(sapply(strsplit( variables, "\\s+"),  length) > 1)
+  if (nrow(cor_matrix) > 15){
+    return(list(
+      data = connected_groups
+    ))
+  }else{
+    graph1 <- plot(cor_graph)
+    
+    graph2 <- pairs(data %>% dplyr::select(where(is.numeric )) )
+    
+    return(list(
+      data = connected_groups,
+      graph1 = graph1,
+      graph2 = graph2
+    ))
+  }
   
-  return(list(
-    data = connected_groups,
-    graph1 = graph1,
-    graph2 = graph2
-  ))
   
 }
 
@@ -1088,7 +1095,7 @@ categorical_corelation <- function(data, threshold = 0.7) {
   
   cat_data <- data %>%
     mutate(across(where(is.character), as.factor)) %>%
-    select(where(is.factor ))
+    dplyr::select(where(is.factor ))
   
   cat_vars <- cat_data  %>% colnames()
   
@@ -1137,7 +1144,7 @@ create_chi2_pvalue_matrix <- function(data) {
   
   cat_data <- data %>%
     mutate(across(where(is.character), as.factor)) %>%
-    select(where(is.factor ))
+    dplyr::select(where(is.factor ))
   
   cat_vars <- cat_data %>% colnames()
   pvalue_matrix <- matrix(0, nrow = length(cat_vars), ncol = length(cat_vars), 
@@ -1159,3 +1166,62 @@ create_chi2_pvalue_matrix <- function(data) {
   
   return(pvalue_matrix)
 }
+
+
+
+
+library(broom)
+
+viz_lm_model_1 <- function(model, n){
+  model_summary <- tidy(model) %>%
+    filter(term != "(Intercept)") %>%
+    arrange(p.value) %>%
+    head(n)
+  ggplot(model_summary, aes(x = term, y = estimate)) +
+    geom_segment(aes(xend = term, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "Importance des variables dans le modèle de régression",
+         x = "Variables",
+         y = "Estimation des coefficients") +
+    theme_minimal()
+}
+
+viz_lm_model_1(modele_1, 20)
+
+
+
+viz_rf_model_2 <- function(model){
+  p1 <- importance(model) %>%
+    data.frame() %>%
+    rownames_to_column("term") %>%
+    ggplot(aes(x = term, y = X.IncMSE)) +
+    geom_segment(aes(xend = term, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "random forest fearture importance",
+         x = "",
+         y = "%IncMSE") +
+    theme_minimal()
+  
+  p2 <- importance(model) %>%
+    data.frame() %>%
+    rownames_to_column("term") %>%
+    ggplot(aes(x = term, y = IncNodePurity)) +
+    geom_segment(aes(xend = term, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "random forest fearture importance",
+         x = "",
+         y = "IncNodePurity") +
+    theme_minimal()
+  
+  p1+p2
+}
+
+plot.res=function(modele_1,titre=""){
+  plot(predict(modele_1), residuals(modele_1), col="black",ylab="Résidus",
+       xlab="Valeurs predites",main=titre)
+  abline(h=0, col="red",lwd=2)
+}
+
