@@ -69,7 +69,7 @@ gt_trabi <- function(data){
       table_body.hlines.color = "white",
       table.border.bottom.color = "black",
       table.border.bottom.width = px(3)) %>%
-    tab_source_note(md( "**@bineneothniel.tra <br> "))
+    tab_source_note(md( "<br>@bineneothniel.tra <br> "))
 }
 
 # data ----
@@ -581,98 +581,96 @@ var_quanti_viz_1 <- function(data, var){
 
 # ajouter le premier quartile, , 3, le min et max
 
-var_quanti_viz_2 <- function(data, var, stat = FALSE) {
+library(dplyr)
+library(rlang)
+library(ggplot2)
+library(glue)
+library(ggtext)
+library(e1071) # or moments
+
+var_quanti_viz_2 <- function(data, var, stat = FALSE, adjust = 0.8) {
   var_name <- as_label(enquo(var))
   
-  
+  # Check if the variable exists in the dataset
   if (!var_name %in% colnames(data)) {
     stop("The variable does not exist in the dataset")
   }
+  
+  # Calculate basic statistics
   min_value <- min(data[[var_name]], na.rm = TRUE)
-  
   q1_value <- quantile(data[[var_name]], probs = 0.25, na.rm = TRUE)
-  
   median_value <- quantile(data[[var_name]], probs = 0.5, na.rm = TRUE)
-  
   mean_value <- mean(data[[var_name]], na.rm = TRUE)
-  
   q3_value <- quantile(data[[var_name]], probs = 0.75, na.rm = TRUE)
-  
   max_value <- max(data[[var_name]], na.rm = TRUE)
   
-  # changer le paramètre stat = TRUE uniquement quand il s'agit de la variable cible
-  
-  if (stat == TRUE){
-    median_value <- median(data[[var_name]], na.rm = TRUE)
-
+  # Additional statistics if stat is TRUE
+  if (stat == TRUE) {
     skewness_value <- skewness(data[[var_name]], na.rm = TRUE)
     kurtosis_value <- kurtosis(data[[var_name]], na.rm = TRUE)
   }
   
-  
+  # Create the plot
   p <- ggplot(data = data, mapping = aes(x = !!enquo(var))) +
     geom_density(
       fill = "steelblue",
       alpha = 0.3,
       color = "lightblue",
-      adjust = 0.8
+      adjust = adjust
     ) +
-    list( if (stat == TRUE) {
-      geom_richtext(
-        aes(
+    { 
+      if (stat == TRUE) {
+        annotate(
+          "richtext",
           x = Inf,
           y = Inf,
           label = glue::glue(
-            "<b><span style='color:blue'>mean    :</span></b> {round(mean_value    , 2)} <br> 
-           <b><span style='color:red'>mediane :</span></b> {round(median_value  , 2)} <br> 
-           <b>Skewness:</b> {round(skewness_value, 2)} <br>
-           <b>kurtosis:</b> {round(kurtosis_value, 2)}"
+            "<b><span style='color:blue'>Mean    :</span></b> {round(mean_value, 2)} <br> 
+            <b><span style='color:red'>Median :</span></b> {round(median_value, 2)} <br> 
+            <b>Skewness:</b> {round(skewness_value, 2)} <br>
+            <b>Kurtosis:</b> {round(kurtosis_value, 2)}"
+          ),
+          hjust = 1.1,
+          vjust = 1.1,
+          fill = "cornsilk",
+          label.color = NA,
+          color = "black",
+          size = 4
+        ) +
+          geom_vline(
+            aes(xintercept = median_value),
+            color = "red",
+            linetype = "dotted",
+            linewidth = 1
           )
-        ),
-        hjust = 1.1,
-        vjust = 1.1,
-        fill = "cornsilk",
-        label.color = NA,
-        color = "black",
-        size = 4
-      ) +
-        geom_vline(
-          aes(xintercept = median_value),
-          color = "red",
-          linetype = "dotted",
-          size = 1
+      } else {
+        annotate(
+          "richtext",
+          x = Inf,
+          y = Inf,
+          label = glue::glue(
+            "<b>Min    :</b> {round(min_value, 2)}  <br>
+            <b>1st Qu    :</b> {round(q1_value, 2)}  <br>
+            <b>Median    :</b> {round(median_value, 2)}  <br>
+            <b><span style='color:blue'>Mean    :</span></b> {round(mean_value, 2)}  <br>
+            <b>3rd Qu    :</b> {round(q3_value, 2)}  <br>
+            <b>Max    :</b> {round(max_value, 2)}"
+          ),
+          hjust = 1.1,
+          vjust = 1.1,
+          fill = "cornsilk",
+          label.color = NA,
+          color = "black",
+          size = 4
         )
-    }, if (stat == FALSE) {
-      geom_richtext(
-        aes(
-          x = Inf,
-          y = Inf,
-          label = glue::glue(
-            "
-            <b>Min    :</b> {round(min_value    , 2)}  <br>
-            <b>1st Qu    :</b> {round(q1_value     , 2)}  <br>
-            <b>Median    :</b> {round(median_value    , 2)}  <br>
-            <b><span style='color:blue'>Mean    :</span></b> {round(mean_value    , 2)}  <br>
-            <b>3rd Qu    :</b> {round(q3_value    , 2)}  <br>
-            <b>Max    :</b> {round(max_value    , 2)}  <br>
-            "
-          )
-        ),
-        hjust = 1.1,
-        vjust = 1.1,
-        fill = "cornsilk",
-        label.color = NA,
-        color = "black",
-        size = 4
-      )
-    } 
-    ) +
+      }
+    } +
     geom_vline(
       aes(xintercept = mean_value),
       color = "blue",
       linetype = "dashed",
-      size = 1
-    )  +
+      linewidth = 1
+    ) +
     labs(
       title = paste("Density Plot of", var_name),
       x = var_name,
@@ -680,9 +678,9 @@ var_quanti_viz_2 <- function(data, var, stat = FALSE) {
     ) +
     theme_minimal()
   
-  
   p
 }
+
 
 
 var_quanti_viz_3 <- function(data = train, var){
@@ -716,59 +714,163 @@ var_quanti_viz_3 <- function(data = train, var){
 
 # variables quantitative / quantitative (à refaire) ----
 
+library(ggplot2)
+library(rlang)
+library(dplyr)
+library(broom)
+
 var_cible_quanti <- function(data, var) {
- 
+  
   var_name <- as_label(enquo(var))
+  
+  # Filtrer les données pour retirer les valeurs non finies
+  data <- data %>%
+    filter(!is.na(!!enquo(var)), !is.na(SalePrice))
+  
+  # Créer une formule de régression dynamiquement
+  formula <- as.formula(paste("SalePrice ~", var_name))
+  
+  # Ajuster un modèle de régression linéaire
+  model <- lm(formula, data = data)
+  
+  model_summary <- summary(model)
+  coef <- coef(model)
+  intercept <- coef[1]
+  slope <- coef[2]
+  r_squared <- model_summary$r.squared
+  p_value <- coef(summary(model))[2, "Pr(>|t|)"]
+  
+  # Créer le texte d'annotation
+  significance <- ifelse(p_value < 0.05, "Significatif", "Non significatif")
+  annotation_text <- paste(
+    sprintf("R² = %.2f", r_squared),
+    sprintf("p-value = %.4f", p_value), 
+    sprintf("Coefficient = %.4f", slope),
+    significance,
+    sep = "\n"
+  )
   
   # Créer un graphique avec ggplot2
   p <- ggplot(data, aes(x = !!enquo(var), y = SalePrice)) +
-    geom_point(color = "black", size = 1.5 ) +                            # Ajouter des points
-    geom_smooth(method = "lm", color = "red", se = FALSE ) +
+    geom_point(color = "black", size = 1.5) +                            # Ajouter des points
+    geom_smooth(method = "lm", color = "red", se = FALSE) +
     labs(
-      title = paste( var_name, " ~  SalePrice"),
+      title = paste(var_name, " ~  SalePrice"),
       x = var_name,
       y = "SalePrice"
-    ) +
+    )+
+    theme_classic() +
     theme(axis.title.x = element_text(size = 15,
-                                      color = lkp_colors,
+                                      color = lkp_blue, # Assurez-vous de passer une couleur de type scalaire
                                       face = "bold"),
           axis.title.y = element_text(size = 10,
-                                      color = "red",
+                                      color = "red", # Assurez-vous de passer une couleur de type scalaire
                                       face = "italic"),
           plot.title = element_text(hjust = 0.5,
                                     face = "bold")
-          )
-    
+    ) +
+    annotate(
+      "richtext",
+      x = Inf,
+      y = Inf,
+      label = glue("
+R² = {sprintf('%.2f', r_squared)} <br>
+p-value = {sprintf('%.4f', p_value)} <br>
+Coefficient = {sprintf('%.4f', slope)} <br>
+{significance}  
+"),
+      hjust = 1.1, vjust = 1.1,
+      fill = "cornsilk",
+      label.color = NA,
+      color = "black",
+      size = 4, fontface = "bold")
   
   # Afficher le graphique
   print(p)
 }
 
 
-
 # variables qualitative / quantitative ----
 
-var_cible_quali_1 <- function(data = train, var ){
-  
-  var_name <- as_label(enquo(var))
-  
-  data %>% 
-    group_by({{var}}) %>%
-    summarise( moyenne = mean(SalePrice)) %>%
-    ggplot(mapping = aes( x = {{var}}, y = moyenne,  ))+
-    geom_col(fill = "white",
-             colour = 4,) +
-    labs(x = var_name, y = "SaleMean") +
-    theme(axis.title.x = element_text(size = 15,
-                                      color = "blue",
-                                      face = "bold"),
-          axis.title.y = element_text(size = 10,
-                                      color = "red",
-                                      face = "italic"))
-  
+custom_theme <- theme(
+  axis.title.x = element_text(size = 15, color = "darkblue", face = "bold"),
+  axis.title.y = element_text(size = 13, color = "darkred", face = "italic"),
+  axis.text.x = element_text(size = 12, color = "darkblue", face = "italic"),
+  axis.text.y = element_text(size = 10, color = "darkred", face = "bold"),
+  plot.title = element_text(size = 20, face = "bold", hjust = 0.5),
+  panel.background = element_rect(fill = "#F7F9F2"),
+  panel.grid.major = element_line(color = "white"),
+  panel.grid.minor = element_line(color = "#F7F9F2"),
+  legend.position = "bottom",
+  legend.background = element_rect(fill = "lightblue"),
+  legend.title = element_text(size = 12, face = "bold"),
+  legend.text = element_text(size = 10)
+)
+
+library(dplyr)
+library(ggplot2)
+library(rlang)
+
+R2_coef <- function(y_pred, y){
+  sst <- sum((y - mean(y))^2)
+  sse <- sum((y_pred - y)^2)
+  rsq <- 1 - sse/sst
+  return(rsq)
 }
 
-# var_cible_quali_1(var = MSZoning)
+RMSE <- function(y_pred, y) {
+  # Calcul de la somme des erreurs au carré
+  sse <- sum((y_pred - y)^2)
+  # Calcul du nombre d'observations
+  n <- length(y)
+  # Calcul de la RMSE
+  rmse <- sqrt(sse / n)
+  return(rmse)
+}
+
+var_cible_quali_1 <- function(data, var,  label){
+  
+  var_name <- as_label(enquo(var))
+  label_name <- as_label(enquo(label))
+  
+  n <- nrow(data)
+  
+  grouped_data <- data %>%
+    group_by({{var}}) %>%
+    summarise(moyenne = mean(!!sym(label_name), na.rm = TRUE))  # Calculate mean SalePrice for each group
+  
+  y <- rep(0, times = n)
+  
+  for (i in 1:n){
+    ind <- which(grouped_data[[1]] == data[[var_name]][i])
+    y[i] <- grouped_data$moyenne[ind]
+  }
+  
+  R2 <- R2_coef(y, data[[label_name]])
+  RMSE <- RMSE(y, data[[label_name]])
+  
+  grouped_data %>%
+    ggplot(mapping = aes( x = {{var}}, y = moyenne,  ))+
+    geom_col(fill = "#219C90",
+             colour = "white",) +
+    labs(x = var_name, y = paste0("mean of ", label_name),  title ="" ) +
+    annotate(
+      "richtext",
+      x = Inf,
+      y = Inf,
+      label = glue(
+        "<b><span style='color:blue'>R2      :</span></b> {round(R2, 2)} <br> 
+          <b><span style='color:blue'>RMSE      :</span></b> {round(RMSE, 2)} "
+      ),
+      hjust = 1.1,
+      vjust = 1.1,
+      fill = "#D8EFD3",
+      label.color = NA,
+      color = "black",
+      size = 4
+    ) + custom_theme
+}
+var_cible_quali_1(train, MSSubClass, SalePrice)
 
 
 var_cible_quali_2 <- function(data = train, var){
@@ -956,7 +1058,7 @@ corelation_heatmap <- function(data){
 
 
 var_type_viz_1 <- function(data){
-  nb_int <- sum(sapply(data, is.integer))
+  # nb_int <- sum(sapply(data, is.integer))
   nb_num <- sum(sapply(data, is.numeric))
   nb_char <- sum(sapply(data, is.character))
   nb_log <- sum(sapply(data, is.logical)) 
@@ -964,8 +1066,8 @@ var_type_viz_1 <- function(data){
   
   
   df <- data.frame(
-    type = c("numeric", "character", "logical", "factor", "integer" ),
-    freq = c(nb_num, nb_char, nb_log, nb_fact, nb_int)
+    type = c("numeric", "character", "logical", "factor" ),
+    freq = c(nb_num, nb_char, nb_log, nb_fact)
   ) %>%
     arrange(desc(freq))
   
@@ -1225,3 +1327,53 @@ plot.res=function(modele_1,titre=""){
   abline(h=0, col="red",lwd=2)
 }
 
+R2_coef <- function(y_pred, y){
+  sst <- sum((y - mean(y))^2)
+  sse <- sum((y_pred - y)^2)
+  rsq <- 1 - sse/sst
+  rsq
+}
+
+cat_feature_importance <- function(data, label){
+  
+  var_name <- as_label(enquo(label))
+  
+  cat_data <- data %>%
+    mutate(across(where(is.character), as.factor)) %>%
+    dplyr::select(where(is.factor))
+  
+  cat_vars <- colnames(cat_data)
+  #cat_vars <- cat_vars[1:3]  # Adjust the number of variables to be considered
+  n <- nrow(data)
+  
+  R2 <- c()
+  for (var in cat_vars) {
+    
+    grouped_data <- data %>%
+      group_by(!!sym(var)) %>%
+      summarise(mean_SalePrice = mean(!!sym(var_name), na.rm = TRUE))  # Calculate mean SalePrice for each group
+    
+    y <- rep(0, times = n)
+    
+    for (i in 1:n){
+      ind <- which(grouped_data[[1]] == data[[var]][i])
+      y[i] <- grouped_data$mean_SalePrice[ind]
+    }
+    R2 <- c(R2, R2_coef(y, data[[var_name]]))
+    
+  }
+  
+  df <- data.frame(variables = cat_vars, R2 = R2)
+  
+  df %>%
+    arrange(desc(R2)) %>%  # Arrange by R² in descending order
+    mutate(variables = factor(variables, levels = rev(variables))) %>%  # Set the order of factors
+    ggplot(aes(x = variables, y = R2)) +
+    geom_segment(aes(xend = variables, yend = 0), color = "grey") +
+    geom_point(size = 2, color = "blue") +
+    coord_flip() +
+    labs(title = "Variables catégorielles qui expliquent le mieux la variance de SalePrice",
+         x = "",
+         y = "R²") +
+    theme_minimal()
+}

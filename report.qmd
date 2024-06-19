@@ -81,8 +81,8 @@ library(labelled)
 library(xgboost)
 
 ```
-# Importation des données
 
+# Importation des données
 
 ```{r}
 train <- read.csv("data/train.csv", na.strings = "NA")
@@ -103,13 +103,7 @@ b <- test %>%
 data <- bind_rows(a, b)
 ```
 
-
-
-
-
-
 ::: {.callout-caution title="basic information about  data" collapse="true"}
-
 ```{r}
 #| code-fold: show 
 
@@ -124,13 +118,9 @@ data %>%
   tab_source_note(md("Source : kaggle"))
 
 ```
-
-
 :::
 
-
 ::: {.callout-caution title="Reading the text file line by line" collapse="true"}
-
 ```{r}
 #| eval: false
 lines <- readLines("data/data_description.txt")
@@ -181,7 +171,6 @@ missing_heatmap(test)
 
 on observe que certaines variables ont des valeurs manquantes qui sont liées
 
-
 -   **79 variables explicatives**
 
 -   **répartition des types de variables**
@@ -221,9 +210,7 @@ var_quanti_viz_2(data = train, var = SalePrice)
 var_quanti_viz_3(data = train, var = SalePrice)
 ```
 
-## exemple de Variables qualitatives
-
-### MSSubClass
+## exemple de Variables qualitatives (MSSubClass)
 
 ```{r}
 #| echo: false
@@ -233,7 +220,7 @@ a <- train %>%
 print(paste("il y a", a, "modalités"))
 ```
 
-#### distribution
+### distribution
 
 ```{r}
 train$MSSubClass <- as.character(train$MSSubClass)
@@ -241,13 +228,13 @@ train$MSSubClass <- as.character(train$MSSubClass)
 var_quali_viz_2(data = train, var = MSSubClass)
 ```
 
-#### lien avec la variable cible
+### lien avec la variable cible
 
 ```{r}
 #| column: screen-inset-shaded
 #| layout:  "[[1,1], [1]]"
 
-var_cible_quali_1(data = train, var = MSSubClass)
+var_cible_quali_1(train, MSSubClass, SalePrice)
 
 var_cible_quali_3(data = train, var = MSSubClass)
 
@@ -255,14 +242,12 @@ var_cible_quali_2(data = train, var = MSSubClass)
 
 ```
 
-on remarque que lavariable `MSSubClass` permet de bien discriminer la vairiable `MSSubClass`
+on remarque que lavariable *MSSubClass* permet de bien discriminer la vairiable *MSSubClass*
 
-## exemple de Variables quantitatives
-
-### LotFrontage
+## exemple de Variables quantitatives(LotFrontage)
 
 ```{r}
-summary(train$LotArea)
+summary(train$LotFrontage)
 ```
 
 ```{r}
@@ -270,12 +255,7 @@ missing_viz_1(data = train, class = LotFrontage)
 ```
 
 ```{r}
-
-var_quanti_viz_3(data = train, LotFrontage)
-```
-
-```{r}
-var_quanti_viz_1(data = train, var = LotFrontage)
+var_quanti_viz_1(data = train, LotFrontage)
 ```
 
 ```{r}
@@ -283,251 +263,112 @@ var_quanti_viz_2(data = train, var = LotFrontage, adjust = 1)
 ```
 
 ```{r}
-library(ggplot2)
-library(rlang)
-library(dplyr)
-library(broom)
+var_quanti_viz_3(data = train, var = LotFrontage)
+```
 
-var_cible_quanti <- function(data, var) {
-  
-  var_name <- as_label(enquo(var))
-  
-  # Filtrer les données pour retirer les valeurs non finies
-  data <- data %>%
-    filter(!is.na(!!enquo(var)), !is.na(SalePrice))
-  
-  # Créer une formule de régression dynamiquement
-  formula <- as.formula(paste("SalePrice ~", var_name))
-  
-  # Ajuster un modèle de régression linéaire
-  model <- lm(formula, data = data)
-
-  model_summary <- summary(model)
-  coef <- coef(model)
-  intercept <- coef[1]
-  slope <- coef[2]
-  r_squared <- model_summary$r.squared
-  p_value <- coef(summary(model))[2, "Pr(>|t|)"]
-  
-  # Créer le texte d'annotation
-  significance <- ifelse(p_value < 0.05, "Significatif", "Non significatif")
-  annotation_text <- paste(
-    sprintf("R² = %.2f", r_squared),
-    sprintf("p-value = %.4f", p_value),
-    sprintf("Coefficient = %.4f", slope),
-    significance,
-    sep = "\n"
-  )
-  
-  # Créer un graphique avec ggplot2
-  p <- ggplot(data, aes(x = !!enquo(var), y = SalePrice)) +
-    geom_point(color = "black", size = 1.5) +                            # Ajouter des points
-    geom_smooth(method = "lm", color = "red", se = FALSE) +
-    labs(
-      title = paste(var_name, " ~  SalePrice"),
-      x = var_name,
-      y = "SalePrice"
-    ) +
-    theme(axis.title.x = element_text(size = 15,
-                                      color = lkp_blue, # Assurez-vous de passer une couleur de type scalaire
-                                      face = "bold"),
-          axis.title.y = element_text(size = 10,
-                                      color = "red", # Assurez-vous de passer une couleur de type scalaire
-                                      face = "italic"),
-          plot.title = element_text(hjust = 0.5,
-                                    face = "bold")
-    ) +
-    annotate(
-"richtext",
-x = Inf,
-y = Inf,
-label = annotation_text,
-hjust = 1.1, vjust = 1.1,
-          fill = "cornsilk",
-          label.color = NA,
-          color = "black",
-          size = 4, fontface = "bold", parse = TRUE)
-  
-  # Afficher le graphique
-  print(p)
-}
-
+```{r}
 var_cible_quanti(data = train, var = LotFrontage)
 ```
 
-# model
-
--   **Surface habitable (GrLivArea)** : La taille de l'espace de vie au-dessus du sol.
-
--   **Nombre de chambres (BedroomAbvGr)** : Le nombre de chambres au-dessus du sol.
-
--   **Nombre de salles de bains (FullBath, HalfBath)** : Le nombre de salles de bains complètes et demi-salles de bains.
-
--   **Année de construction (YearBuilt)** : L'année de construction de la maison.
-
--   **Année de rénovation (YearRemodAdd)** : L'année de la dernière rénovation ou ajout.
-
--   **Qualité globale (OverallQual)** : Une évaluation de la qualité globale des matériaux et de la finition de la maison.
-
--   **Condition globale (OverallCond)** : Une évaluation de l'état général de la maison.
-
--   **Nombre de garages (GarageCars)** : Le nombre de places de garage.
-
--   **Surface du garage (GarageArea)** : La taille du garage en pieds carrés.
-
--   **Sous-sol (TotalBsmtSF)** : La surface totale du sous-sol.
-
-### 2. **Caractéristiques du Terrain :**
-
--   **Surface du terrain (LotArea)** : La taille du terrain en pieds carrés.
-
--   **Forme du terrain (LotShape)** : La forme du terrain (régulière, irrégulière, etc.).
-
--   **Type de zonage (Zoning)** : Le type de zonage résidentiel.
-
-### 3. **Emplacement :**
-
--   **Quartier (Neighborhood)** : Le quartier où se trouve la maison.
-
--   **Proximité des services (Condition1, Condition2)** : La proximité des divers services et commodités (écoles, parcs, centres commerciaux, etc.).
-
--   **Qualité des écoles locales** : La qualité des écoles dans la zone (souvent prise en compte par un score ou une évaluation).
-
-### 4. **Caractéristiques Extérieures :**
-
--   **Type de façade (Exterior1st, Exterior2nd)** : Le type de matériau de façade extérieur.
-
--   **Matériaux de toiture (RoofMatl)** : Le matériau de la toiture.
-
--   **Type de fondation (Foundation)** : Le type de fondation (béton, bois, etc.).
-
-### 5. **Caractéristiques Intérieures :**
-
--   **Type de chauffage (Heating)** : Le type de système de chauffage.
-
--   **Type de climatisation (CentralAir)** : Si la maison dispose de la climatisation centrale.
-
--   **Qualité de la cuisine (KitchenQual)** : Une évaluation de la qualité de la cuisine.
-
-### 6. **Autres Variables :**
-
--   **Residual standard error** : représente l'écart type des résidus, une mesure de la dispersion des observations autour de la ligne de régression.
-
--   **Multiple R-squared** : variabilité expliquée
-
--   Adjusted R-squared : Ajusté pour le nombre de variables explicatives dans le modèle.
-
--   F-statistic : teste l'hypothèse nulle que tous les coefficients sont égaux à zéro (sauf l'intercept). La p-value associée (\<2.2e-16) montre que le modèle dans son ensemble est significatif.
-
 # métrique d'évaluation (modèle le plus simple)
 
+Nous choisissons dans notre étude le modèle intercepté comme modèle de référence. Le modèle qui fait l'erreur la plus grande erreur possible.
+
 ```{r}
-
-
 files <- data.frame(
   Id = test$Id,
   SalePrice = rep(mean(train$SalePrice), nrow(test))
   )
 
 # write.csv(data, file = "output.csv", row.names = FALSE)
-
 files %>% head(6)
 ```
 
-le modèle le plus simple (modèle à 1 paramètre) a comme score **0.42577**
+après une submission sur kaggle, on observe que le modèle le plus simple (modèle à 1 paramètre) a comme score **0.42577**
 
-on regroupe les données de train et test pour éffectuer les mêmes modifications
+mon indicateur de performance s'inspire du $^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}$
 
-# strees
+nouveau indicateur de performance : Soit $y = SalaPrice$ et $z=ln(y)$
+
+$$indiacteur =1 - \frac{RMSE_{model d'etude}}{RMSE_{modelsimple}} = 1 - \frac{\sqrt{\frac{1}{n} \sum_{i=1}^{n} (z_i - \hat{z}_i)^2}}{\sqrt{\frac{1}{n} \sum_{i=1}^{n} (z_i - \bar{z})^2}}$$
 
 ```{r}
+indicateur <- function(a){
+if ( a > 0.42577 | a < 0 ){
+  print("faut te revoir")
+}else{
+    result <- (1 - a / 0.42577) * 100
+  sprintf("%.2f %%", result)
+}
+}
+```
 
+## meilleur score actuel su kaggle
+
+```{r}
+indicateur(0.14736)
+```
+
+# Preparation des données
+
+![](images/clipboard-3094508585.png)
 
 ## trop de données manquantes
-data <- data %>% 
-    dplyr::select( -c(MiscVal, PoolArea)) 
 
+```{r}
+#| layout-ncol: 2
+missing_viz_1(data, MiscVal)
+missing_viz_1(data, PoolArea)
+```
+
+```{r}
+data <- data %>% 
+    dplyr::select( -c(MiscVal, PoolArea))
+```
+
+les variables *PoolQC* et *MiscFeature* vont nous permettre de traduire l'information contenue dans les variables supprimées en **variable binaire**.
 
 ## variable avec une modalité dominante dépassant 97%
 
- data <- data %>% 
-  dplyr::select( -c(Street, Utilities, Condition2, RoofMatl, Heating))
+```{r}
+data <- data %>% 
+      dplyr::select( -c(Street, Utilities))
 
 ```
 
-la colonne `Id` n’est pas nécessaire pour la formation du modèle.
-
-### Id, Yr
+je les suprime car non pertinentes
 
 ```{r}
-data <- data %>%  dplyr::select( - c(Id, YrSold) )
+var_cible_quali_1(train, Street, SalePrice)
+var_cible_quali_1(train, Utilities, SalePrice)
 ```
 
-## MSSubClass
-
-``` r
-data <- data %>% mutate(
-        MSSubClass = ifelse(MSSubClass == 150, mode(MSSubClass), MSSubClass ),
-        MSZoning = ifelse(MSSubClass == NA, mode(MSZoning), MSZoning ),
-        Exterior1st = ifelse(Exterior1st == NA, mode(Exterior1st), Exterior1st ),
-        Exterior2nd = ifelse(Exterior2nd == NA, mode(Exterior2nd), Exterior2nd )
-          
-)
-```
+-   la colonne *Id* n’est pas nécessaire pour la formation du modèle.
 
 ```{r}
-data <- data %>% mutate(
-        MSSubClass = ifelse(MSSubClass == 150, NA, MSSubClass ),
-        MSZoning = ifelse( is.na(MSSubClass), NA, MSZoning ),
-        Exterior1st = ifelse( is.na(Exterior1st), NA, Exterior1st ),
-        Exterior2nd = ifelse( is.na(Exterior2nd), NA, Exterior2nd )
-          
-)
+data <- data %>%  dplyr::select( -c(Id) )
 ```
 
-# MasVnrArea masvarty
-
-```{r}
-unique(data$MasVnrType)
-```
-
-```{r}
-
-data <- data %>%
-  mutate(MasVnrArea = case_when(
-    is.na(MasVnrArea) ~ "None",
-    MasVnrArea == 0 ~ "None",
-    0 <= MasVnrArea & MasVnrArea <= 250 ~ "1",
-    250 < MasVnrArea & MasVnrArea <= 500 ~ "2",
-    500 < MasVnrArea  ~ ">500"
-  ))
-```
-
-# traitement de données
-
-```{r}
 ## Convertir les variables à étiquettes en chaîne de charactère
 
+```{r}
 data$MSSubClass <- as.character(data$MSSubClass)
 data$OverallQual <- as.character(data$OverallQual)
 data$OverallCond <- as.character(data$OverallCond)
-
 data$Fireplaces <- as.character(data$Fireplaces)
 data$GarageCars <- as.character(data$GarageCars)
 data$BsmtFullBath <- as.character(data$BsmtFullBath)
 data$BsmtHalfBath <- as.character(data$BsmtHalfBath)
-
 data$FullBath <- as.character(data$FullBath)
-
 data$HalfBath <- as.character(data$HalfBath)
 data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
 data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
-
-
 data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
-
-
 data$MoSold <- as.character(data$MoSold)
+data$YrSold <- as.character(data$YrSold)
+```
+
+```         
 
 ### création de nouvelles variables
 
@@ -580,13 +421,11 @@ data <- data %>%
     40 < remod_since & remod_since <= 60 ~ "3",
     60 < remod_since  ~ ">60"
   ))
-
-
 ```
 
 ## discretisation des variables numériques
 
-``` r
+```         
 
 # GarageArea
 data <- data %>%
@@ -685,20 +524,11 @@ data <- data %>%
     1000 < X2ndFlrSF & X2ndFlrSF <= 1500 ~ "1000-1500",
     1500 < X2ndFlrSF  ~ ">1500",
   ))
-
-
-
-
-# WoodDeckSF
-data <- data %>%
-  mutate(WoodDeckSF = case_when(
-    WoodDeckSF == 0 ~ "No_WoodDeckSF",
-    0 < WoodDeckSF & WoodDeckSF <= 200 ~ "0-200",
-    200 < WoodDeckSF  ~ ">200",
-  ))
 ```
 
-### encore une discrétisation de variable numérique \[Yes, No \]
+### binarisation/discretisation \[Yes, No \] ?
+
+on va donc scinder les variables qui voient leur R2 amélioré après la binarisation
 
 ```{r}
 data <- data %>%
@@ -709,7 +539,144 @@ data <- data %>%
           LowQualFinSF = ifelse(LowQualFinSF == 0, "No", "Yes"),
           BsmtFinSF2 = ifelse(BsmtFinSF2 == 0, "No", "Yes")
           )
+
+
+data <- data %>%
+  mutate(WoodDeckSF = case_when(
+    WoodDeckSF == 0 ~ "No_WoodDeckSF",
+    0 < WoodDeckSF & WoodDeckSF <= 100 ~ "0-100",
+    100< WoodDeckSF & WoodDeckSF <= 200 ~ "100-200",
+    200< WoodDeckSF & WoodDeckSF <= 300 ~ "200-300",
+    300 < WoodDeckSF  ~ ">200",
+  )) %>%
+mutate(WoodDeckSF = fct_relevel(WoodDeckSF, "No_WoodDeckSF", "0-100", "100-200", "200-300", ">200" ))
 ```
+
+::: {.callout-caution title="justification" collapse="true"}
+on va donc scinder les variables qui voient leur R2 amélioré après la binarisation
+
+```{r}
+RMSE <- function(y_pred, y) {
+  sse <- sum((y_pred - y)^2)
+  n <- length(y)
+  rmse <- sqrt(sse / n)
+  return(rmse)
+}
+
+rmse_of_reference_model_on_train <- RMSE(rep(mean(label), times = nrow(train)), label)
+rmse_of_reference_model_on_train
+```
+
+sur les donnée de train, le rmse du modèles de reférence est : Puisque le projet kaggle sera évalué en rmse, alor on va construire un indicateur autour du rmse de la base train.
+
+on analyse les variables qui pourraient être transformée en variables binaires pour vérifer si cette transformation améliore ou réduit la variance
+
+```{r}
+a <- train %>%
+  mutate( OpenPorchSF = ifelse(OpenPorchSF == 0, "No", "Yes") )
+var_cible_quanti(train, OpenPorchSF)
+var_cible_quali_1(a, OpenPorchSF, SalePrice)
+```
+
+```{r}
+a <- train %>%
+  mutate( EnclosedPorch = ifelse(EnclosedPorch == 0, "No", "Yes") )
+var_cible_quanti(train, EnclosedPorch)
+var_cible_quali_1(a, EnclosedPorch, SalePrice)
+```
+
+```{r}
+a <- train %>%
+  mutate( X3SsnPorch = ifelse(X3SsnPorch == 0, "No", "Yes") )
+var_cible_quanti(train, X3SsnPorch)
+var_cible_quali_1(a, X3SsnPorch, SalePrice)
+
+#la binarisation n'apporte rien,
+```
+
+```{r}
+a <- train %>%
+  mutate( ScreenPorch = ifelse(ScreenPorch == 0, "No", "Yes") )
+var_cible_quanti(train, ScreenPorch)
+var_cible_quali_1(a, ScreenPorch, SalePrice)
+#la binarisation n'apporte rien,
+```
+
+```{r}
+a <- train %>%
+  mutate( LowQualFinSF = ifelse(LowQualFinSF == 0, "No", "Yes") )
+var_cible_quanti(train, LowQualFinSF)
+var_cible_quali_1(a, LowQualFinSF, SalePrice)
+
+#la binarisation n'apporte rien,
+```
+
+```{r}
+a <- train %>%
+  mutate( BsmtFinSF2 = ifelse(BsmtFinSF2 == 0, "No", "Yes") )
+var_cible_quanti(train, BsmtFinSF2)
+var_cible_quali_1(a, BsmtFinSF2, SalePrice)
+#la binarisation n'apporte rien,
+```
+
+```{r}
+a <- train %>%
+  mutate( PoolArea = ifelse(PoolArea == 0, "No", "Yes") )
+var_cible_quanti(train, PoolArea)
+var_cible_quali_1(a, PoolArea, SalePrice)
+#la binarisation n'apporte rien,
+```
+
+![](images/clipboard-3309648882.png)
+
+je suppose que les terrasses qui ont une valeur dans un intervale de 100 ont plus ou moins le même prix. et qu'il faut en moyenne 100 m\^2 de plus à la surface de la terasse pour avoir un impact significatif sur le prix
+
+```{r}
+# WoodDeckSF
+a <- train %>%
+  mutate(WoodDeckSF = case_when(
+    WoodDeckSF == 0 ~ "No_WoodDeckSF",
+    0 < WoodDeckSF & WoodDeckSF <= 100 ~ "0-100",
+    100< WoodDeckSF & WoodDeckSF <= 200 ~ "100-200",
+    200< WoodDeckSF & WoodDeckSF <= 300 ~ "200-300",
+    300 < WoodDeckSF  ~ ">200",
+  )) %>%
+mutate(WoodDeckSF = fct_relevel(WoodDeckSF, "No_WoodDeckSF", "0-100", "100-200", "200-300", ">200" ))
+
+
+var_cible_quanti(train, WoodDeckSF)
+var_cible_quali_1(a, WoodDeckSF, SalePrice)
+```
+:::
+
+## outlier
+
+```{r}
+Q3 <- quantile(data$LotArea, 0.75)
+seuil <- 20000
+# Utiliser dplyr pour remplacer automatiquement les valeurs
+data <- data %>%
+  mutate(LotArea = if_else(LotArea > seuil, 1.5*as.numeric(Q3), LotArea))
+```
+
+::: {.callout-caution title="justification" collapse="true"}
+```{r}
+var_cible_quanti(train , LotArea)
+
+Q3 <- quantile(train$LotArea, 0.75)
+seuil <- 20000
+train_corrigees <- train %>%
+  mutate(LotArea = if_else(LotArea > seuil, 1.5*as.numeric(Q3), LotArea))
+
+var_cible_quanti(train_corrigees , LotArea)
+```
+
+```{r}
+var_cible_quanti(train, MasVnrArea)
+var_cible_quanti(train, BsmtFinSF1)
+var_cible_quanti(train, BsmtUnfSF)
+```
+:::
 
 ## Mising value
 
@@ -717,15 +684,9 @@ data <- data %>%
 #| layout-nrow: 2
 #| layout-ncol: 2
 
-
 missing_loliplot(data)
 
 missing_variables(data)
-```
-
-```{r}
-#| layout-nrow: 2
-#| layout-ncol: 2
 
 
 # gg_miss_case(train)
@@ -734,7 +695,9 @@ hist(n_miss_row(data), xlab = "", main =  "Histograme du nombre de valeurs manqu
 missing_heatmap(data)
 ```
 
-#### certaines NA ont une raisons connu d'être
+#### certaines NA ont une raisons connues d'être
+
+toute valeur manquante informative doit être remplacé par l'information qu'elle contient
 
 ```{r}
 data <- data %>%
@@ -757,51 +720,15 @@ data <- data %>%
     GarageCond = ifelse(is.na(GarageCond), "No.Garage", GarageCond),
 
     PoolQC = ifelse(is.na(PoolQC), "No.Pool", "Yes")
-  )%>%
-  dplyr::select(- PoolQC)
+  )
 ```
 
 ```{r}
-missing_heatmap(data)
-```
-
-#### Missforest for other NA input
-
-Missforest permet d'imputer les valeurs manquantes dans les jeux de données de type **mixte** en utilisant les **forêts aléatoires** pour prédire les valeurs manquantes de manière itérative et non paramétrique, en tirant parti des relations entre les variables.
-
-missForest surpasse les autres méthodes d'imputation, en particulier dans les contextes de données où des interactions complexes et des relations non linéaires sont suspectées.
-
-![](images/clipboard-4011442430.png)
-
-je prépare mes données pour l'algorithme
-
-```{r}
-# Transformer toutes les colonnes de type caractère en facteur
-data <- data %>%
-  mutate(across(where(is.character), as.factor))
-         
-var_type_viz_1(data)
-
-```
-
-```{r}
-# Stocker les types initiaux pour chaque ligne
-# types_lines <- lapply(data, function(line) sapply(line, class))
-
-library(missForest)
-data.imp <- missForest(data, verbose = TRUE, maxiter = 4, ntree = 50, replace = FALSE)
-```
-
-```{r}
-colSums(is.na(data.imp$ximp))
-```
-
-## on enlève les modalités des variables cateégorielles et on les rempplace par des valeur manquantes qu'on va inputer à nouveau par la methode de miss forest.
-
-```{r}
-data <- data.imp$ximp
 sum(is.na(data))
+# 715
 ```
+
+# Identifier les modalités communes
 
 ```{r}
 data <- data %>%
@@ -829,11 +756,57 @@ for (i in cat_vars) {
 ```
 
 ```{r}
-sum(is.na(data))
+data <- data %>% select(-type)
 ```
 
 ```{r}
-missing_loliplot(data)
+missing_heatmap(data)
+```
+
+```{r}
+sum(is.na(data))
+```
+
+#### Missforest for other NA input
+
+Missforest permet d'imputer les valeurs manquantes dans les jeux de données de type **mixte** en utilisant les **forêts aléatoires** pour prédire les valeurs manquantes de manière itérative et non paramétrique, en tirant parti des relations entre les variables.
+
+missForest surpasse les autres méthodes d'imputation, en particulier dans les contextes de données où des interactions complexes et des relations non linéaires sont suspectées.
+
+![](images/clipboard-4011442430.png)
+
+je prépare mes données pour l'algorithme
+
+```{r}
+# Transformer toutes les colonnes de type caractère en facteur
+data <- data %>%
+  mutate(across(where(is.character), as.factor))
+         
+var_type_viz_1(data)
+
+```
+
+## \>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>
+
+```{r}
+skimr::skim(data)
+```
+
+```{r}
+library(missForest)
+# data.imp <- missForest(data, verbose = TRUE, maxiter = 8 , ntree = 50, replace = TRUE)
+data <- read.csv("inputed_data.csv", na.strings = "NA")
+```
+
+```{r}
+colSums(is.na(data.imp$ximp))
+```
+
+## on enlève les modalités des variables cateégorielles et on les rempplace par des valeur manquantes qu'on va inputer à nouveau par la methode de miss forest.
+
+```{r}
+data <- data.imp$ximp
+sum(is.na(data))
 ```
 
 ```{r}
@@ -865,18 +838,7 @@ var_type_viz_1(data)
 ```
 
 ```{r}
-data <- data %>%
-  dplyr::select(-type)
-
-data.imp <- missForest(data, verbose = TRUE, maxiter = 4, ntree = 50, replace = FALSE)
-```
-
-```{r}
-sum(is.na(data.imp$ximp))
-```
-
-```{r}
-write.csv(data.imp$ximp, file = "inputed_data.csv", row.names = FALSE)
+#write.csv(data.imp$ximp, file = "inputed_data.csv", row.names = FALSE)
 ```
 
 # \>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>
@@ -896,25 +858,21 @@ library(igraph)
 data$MSSubClass <- as.character(data$MSSubClass)
 data$OverallQual <- as.character(data$OverallQual)
 data$OverallCond <- as.character(data$OverallCond)
-
 data$Fireplaces <- as.character(data$Fireplaces)
 data$GarageCars <- as.character(data$GarageCars)
 data$BsmtFullBath <- as.character(data$BsmtFullBath)
 data$BsmtHalfBath <- as.character(data$BsmtHalfBath)
-
 data$FullBath <- as.character(data$FullBath)
-
 data$HalfBath <- as.character(data$HalfBath)
 data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
 data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
-
-
 data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
-
 data$MoSold <- as.character(data$MoSold)
 
 
 ```
+
+la variable categorielle qui discrimine le mieux le prix
 
 ```{r}
 library(dplyr)
@@ -924,59 +882,39 @@ library(rlang)
 cat_selection <- data[1:nrow(train), ]
 cat_selection$SalePrice <- label
 
-R2_coef <- function(y_pred, y){
-  sst <- sum((y - mean(y))^2)
-  sse <- sum((y_pred - y)^2)
-  rsq <- 1 - sse/sst
-  rsq
-}
-
-cat_feature_importance <- function(data, label){
-  
-  var_name <- as_label(enquo(label))
-  
-  cat_data <- data %>%
-    mutate(across(where(is.character), as.factor)) %>%
-    dplyr::select(where(is.factor))
-  
-  cat_vars <- colnames(cat_data)
-  #cat_vars <- cat_vars[1:3]  # Adjust the number of variables to be considered
-  n <- nrow(data)
-  
-  R2 <- c()
-  for (var in cat_vars) {
-    
-    grouped_data <- data %>%
-      group_by(!!sym(var)) %>%
-      summarise(mean_SalePrice = mean(!!sym(var_name), na.rm = TRUE))  # Calculate mean SalePrice for each group
-    
-    y <- rep(0, times = n)
-    
-    for (i in 1:n){
-      ind <- which(grouped_data[[1]] == data[[var]][i])
-      y[i] <- grouped_data$mean_SalePrice[ind]
-    }
-    R2 <- c(R2, R2_coef(y, data[[var_name]]))
-    
-  }
-  
-  df <- data.frame(variables = cat_vars, R2 = R2)
-  
-  df %>%
-    arrange(desc(R2)) %>%  # Arrange by R² in descending order
-    mutate(variables = factor(variables, levels = rev(variables))) %>%  # Set the order of factors
-    ggplot(aes(x = variables, y = R2)) +
-    geom_segment(aes(xend = variables, yend = 0), color = "grey") +
-    geom_point(size = 2, color = "blue") +
-    coord_flip() +
-    labs(title = "Variables catégorielles qui expliquent le mieux la variance de SalePrice",
-         x = "",
-         y = "R²") +
-    theme_minimal()
-}
 
 cat_feature_importance(cat_selection, SalePrice)
 
+```
+
+# anova
+
+-   **si on suppose qu'aucune valeur aberrante significative** dans aucune cellule du plan
+
+L'ANOVA repose sur une idée simple : si la variation moyenne entre les groupes est suffisamment grande par rapport à la variation moyenne au sein des groupes (variance intra-groupe), on peut conclure que les moyennes des groupes ne sont pas toutes égales.
+
+La statistique F se calcule comme suit : variance entre les groupes / variance intra-groupe.
+
+Cela ressemble au clustering, où l'on cherche à maximiser la variance entre les groupes tout en minimisant la variance au sein des groupes. Une valeur élevée de F indique que la variable qualitative discrimine bien la variable cible.
+
+![](images/clipboard-4150061290.png)
+
+::: success
+Notez qu’une valeur petite de F (F \< 1) indique qu’il n’y a pas de différence significative entre les moyennes des échantillons comparés.
+
+Cependant, un ratio plus élevé signifie que les variations entre les moyennes des groupes sont très différentes les unes des autres par rapport à la variation des observations individuelles dans chaque groupe.
+:::
+
+-   `ggpubr` pour créer facilement des graphiques prêts à la publication
+
+-   `rstatix` offre des fonctions R conviviales pour des analyses statistiques faciles à réaliser
+
+-   `datarium`: contient les jeux de données requis pour ce chapitre
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(rstatix)
 ```
 
 ```{r}
@@ -1193,7 +1131,7 @@ data_onehot <- dummy_cols(data, remove_first_dummy = TRUE, remove_selected_colum
 ```{r}
 
 tools <- numerical_corelation(data_onehot, 0.80)
-tools$data
+tools$data %>% gt_trabi()
 ```
 
 ```{r}
@@ -1339,7 +1277,23 @@ print(shapiro_test)
 ```{r}
 files <- data.frame(
   Id = test$Id,
-  SalePrice = predict(modele_1, cleaned_test)
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+```
+
+
+```{r}
+SalePrice = predict(modele_1, cleaned_test)
 )
 rownames(files) <- NULL
 files %>% head(10) %>% gt_trabi()

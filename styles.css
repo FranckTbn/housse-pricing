@@ -39,3 +39,38 @@ h1, h2, h3, h4 { font-weight: 400; }
 .leaflet-container {
   background-color: white !important;
 }
+
+
+
+
+
+
+/* from data novia */
+
+.success {
+    background-color: #E0F1D9;
+    border-color: #D7EAC7;
+}
+.success, .success:before {
+    color: #478948;
+}
+.error, .notice, .warning, .success, .question {
+    height: auto;
+    padding: 10px 10px 10px 40px;
+    margin: 5px auto 15px auto;
+    line-height: 20px;
+    border: 1px solid #FFFFFF;
+    border-radius: 4px;
+    position: relative;
+    display: block;
+    text-align: left;
+}
+
+
+
+
+
+
+
+
+
