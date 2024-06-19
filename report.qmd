@@ -65,9 +65,10 @@ editor_options:
 ---
 
 ```{r}
-#| label: setup
 #| include: false
 #| file: fonctions.R
+
+##| label: setup (à ajouter lors du render)
 
 library(ggridges) 
 library(DataExplorer)
@@ -80,13 +81,14 @@ library(labelled)
 library(xgboost)
 
 ```
+# Importation des données
+
 
 ```{r}
 train <- read.csv("data/train.csv", na.strings = "NA")
 test <- read.csv("data/test.csv", na.strings = "NA")
 
 
-Y <- train$SalePrice
 label <- train$SalePrice
 Id <- test$Id
 
@@ -101,7 +103,12 @@ b <- test %>%
 data <- bind_rows(a, b)
 ```
 
-# Importation des données
+
+
+
+
+
+::: {.callout-caution title="basic information about  data" collapse="true"}
 
 ```{r}
 #| code-fold: show 
@@ -111,30 +118,27 @@ skimr::skim(data)
 ```
 
 ```{r}
-train %>%
-  slice_head(n = 3) %>%
+data %>%
+  slice_head(n = 6) %>%
   gt_trabi() %>%
   tab_source_note(md("Source : kaggle"))
 
 ```
 
--   **Reading the text file line by line**
 
-``` r
+:::
+
+
+::: {.callout-caution title="Reading the text file line by line" collapse="true"}
+
+```{r}
+#| eval: false
 lines <- readLines("data/data_description.txt")
 cat(lines, sep = "\n")
 ```
 
-::: {.callout-caution title="basic information about train data" collapse="true"}
 ```{r}
 data_information(train)
-
-```
-:::
-
-::: {.callout-caution title="basic information about test data" collapse="true"}
-```{r}
-data_information(test)
 
 ```
 :::
@@ -177,6 +181,7 @@ missing_heatmap(test)
 
 on observe que certaines variables ont des valeurs manquantes qui sont liées
 
+
 -   **79 variables explicatives**
 
 -   **répartition des types de variables**
@@ -189,6 +194,7 @@ on observe que certaines variables ont des valeurs manquantes qui sont liées
 #| layout-nrow: 2
 #| layout-ncol: 2
 
+# j'ai enlever integer car R compte les variables de type integer parmi les numériques.
 var_type_viz_1(train)
 var_type_viz_1(test)
 ```
@@ -204,24 +210,15 @@ summary(train$SalePrice)
 ```
 
 ```{r}
-
-var_quanti_viz_3(data = train, SalePrice)
-```
-
-```{r}
-# Segmenter la variable SalePrice en intervalles de 1e+5 
-train$sales_cut <- cut(train$SalePrice, breaks = seq(0, max(train$SalePrice, na.rm = TRUE) + 1e+5, by = 1e+5), labels = FALSE)*1e+5
-
-train$sales_cut <- as.factor(train$sales_cut)
-ggplot(data = train, mapping = aes( x = sales_cut))+
-  geom_bar()
-
-train <- train %>% select(- sales_cut)
-
+var_quanti_viz_1(data = train, SalePrice)
 ```
 
 ```{r}
 var_quanti_viz_2(data = train, var = SalePrice)
+```
+
+```{r}
+var_quanti_viz_3(data = train, var = SalePrice)
 ```
 
 ## exemple de Variables qualitatives
@@ -258,6 +255,8 @@ var_cible_quali_2(data = train, var = MSSubClass)
 
 ```
 
+on remarque que lavariable `MSSubClass` permet de bien discriminer la vairiable `MSSubClass`
+
 ## exemple de Variables quantitatives
 
 ### LotFrontage
@@ -280,10 +279,79 @@ var_quanti_viz_1(data = train, var = LotFrontage)
 ```
 
 ```{r}
-var_quanti_viz_2(data = train, var = LotFrontage)
+var_quanti_viz_2(data = train, var = LotFrontage, adjust = 1)
 ```
 
 ```{r}
+library(ggplot2)
+library(rlang)
+library(dplyr)
+library(broom)
+
+var_cible_quanti <- function(data, var) {
+  
+  var_name <- as_label(enquo(var))
+  
+  # Filtrer les données pour retirer les valeurs non finies
+  data <- data %>%
+    filter(!is.na(!!enquo(var)), !is.na(SalePrice))
+  
+  # Créer une formule de régression dynamiquement
+  formula <- as.formula(paste("SalePrice ~", var_name))
+  
+  # Ajuster un modèle de régression linéaire
+  model <- lm(formula, data = data)
+
+  model_summary <- summary(model)
+  coef <- coef(model)
+  intercept <- coef[1]
+  slope <- coef[2]
+  r_squared <- model_summary$r.squared
+  p_value <- coef(summary(model))[2, "Pr(>|t|)"]
+  
+  # Créer le texte d'annotation
+  significance <- ifelse(p_value < 0.05, "Significatif", "Non significatif")
+  annotation_text <- paste(
+    sprintf("R² = %.2f", r_squared),
+    sprintf("p-value = %.4f", p_value),
+    sprintf("Coefficient = %.4f", slope),
+    significance,
+    sep = "\n"
+  )
+  
+  # Créer un graphique avec ggplot2
+  p <- ggplot(data, aes(x = !!enquo(var), y = SalePrice)) +
+    geom_point(color = "black", size = 1.5) +                            # Ajouter des points
+    geom_smooth(method = "lm", color = "red", se = FALSE) +
+    labs(
+      title = paste(var_name, " ~  SalePrice"),
+      x = var_name,
+      y = "SalePrice"
+    ) +
+    theme(axis.title.x = element_text(size = 15,
+                                      color = lkp_blue, # Assurez-vous de passer une couleur de type scalaire
+                                      face = "bold"),
+          axis.title.y = element_text(size = 10,
+                                      color = "red", # Assurez-vous de passer une couleur de type scalaire
+                                      face = "italic"),
+          plot.title = element_text(hjust = 0.5,
+                                    face = "bold")
+    ) +
+    annotate(
+"richtext",
+x = Inf,
+y = Inf,
+label = annotation_text,
+hjust = 1.1, vjust = 1.1,
+          fill = "cornsilk",
+          label.color = NA,
+          color = "black",
+          size = 4, fontface = "bold", parse = TRUE)
+  
+  # Afficher le graphique
+  print(p)
+}
+
 var_cible_quanti(data = train, var = LotFrontage)
 ```
 
@@ -1296,6 +1364,7 @@ M0 <- lm(SalePrice ~ 1, data = oh_cleaned_train) # null model
 M1 <- lm(SalePrice ~ ., data = oh_cleaned_train) # full model
 summary(M1)
 ```
+
 ```{r}
 autoplot(M1, which=1, ncol=1)
 ```
@@ -1303,7 +1372,6 @@ autoplot(M1, which=1, ncol=1)
 ```{r}
 autoplot(M1, which=4, ncol=1)
 ```
-
 
 ```{r}
 #step_model <- add1(M0, scope = Mf, data = oh_cleaned_train, test = "F")
@@ -1317,9 +1385,9 @@ autoplot(M1, which=4, ncol=1)
 #M1 <- update(M0, . ~ .+ LotArea + GrLivArea + WoodDeckSF, data = oh_cleaned_train)
 #autoplot(M2, which=1, ncol=1)
 ```
-Forward selection
-Usually start from the null model.
-Every variable outside the current model <none> can be added (+) one at time at each step until AIC is no better (<none> has the lowest AIC in the top of the list).
+
+Forward selection Usually start from the null model. Every variable outside the current model <none> can be added (+) one at time at each step until AIC is no better (<none> has the lowest AIC in the top of the list).
+
 ```{r}
 # Forward using AIC
 # M1.forw <- step(M0, scope = list(lower = M0,  upper = M1), direction = "forward", k = 2)
@@ -1332,9 +1400,9 @@ summary(M1.forw)
 ```{r}
 extractAIC(M1.forw)
 ```
-Stepwise selection
-Start from any model such as the full model.
-Every variable outside the current model <none> can be added (+) and those inside can be dropped (-) one at time at each step until AIC is no better.
+
+Stepwise selection Start from any model such as the full model. Every variable outside the current model <none> can be added (+) and those inside can be dropped (-) one at time at each step until AIC is no better.
+
 ```{r}
 M1 <- lm(SalePrice ~ ., data = oh_cleaned_train) # full model
 M1.step <- step(M1, scope = list(lower = SalePrice ~ 1,  upper = SalePrice ~ .),direction = "both", k = 2)
@@ -1343,7 +1411,6 @@ M1.step <- step(M1, scope = list(lower = SalePrice ~ 1,  upper = SalePrice ~ .),
 ```{r}
 extractAIC(M1.step)
 ```
-
 
 # regularisation
 
