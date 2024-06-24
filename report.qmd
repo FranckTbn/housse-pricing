@@ -1,6 +1,6 @@
 ---
 title: "Stage: Projet 1"
-title-block-banner: true
+title-block-banner: images/clipboard-7304765.png
 subtitle: "House Prices - Advanced Regression Techniques"
 date: last-modified
 author: 
@@ -11,80 +11,27 @@ keywords:
   - R for data-science
   - regression techniques
   - machine learning
-format: 
-  html:
-    
-    toc: true
-    toc-depth: 3
-    toc-expand: 1
-    toc-location: left
-    toc-title: "table des matières"
-    grid:
-      sidebar-width: 230px
-      body-width: 950px
-      margin-width: 100px
-      gutter-width: 1.5em
-    number-sections: true
-    number-depth: 3
-    smooth-scroll: true
-    code-fold: false
-    code-block-border-left: true
-    code-summary: "montrer"
-    html-math-method: katex
-    anchor-sections: false
-    other-links:
-        
-      - icon: box-arrow-up-right
-        text: kaggle
-        href: https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques
-theme:
-   
-    light: lumen
-    dark: cyborg
-      
-editor: visual
-column: page-inset-right
-anchor-sections: true
-smooth-scroll: true
-html-math-method: katex
-code-annotations: hover
-code-link: true
-lightbox: true
-css: style.css
-echo: false
-execute: 
-  freeze: auto
-  error: false
-  warning: false
-eval: true
-comments:
-  hypothesis: 
-    theme: clean
-editor_options: 
-  chunk_output_type: console
+format: html
+  
+filters:
+  - webr
+  - shinylive
 ---
+
+
 
 ```{r}
 #| include: false
 #| file: fonctions.R
-
-##| label: setup (à ajouter lors du render)
-
-library(ggridges) 
-library(DataExplorer)
-library(naniar)
-library(tidyverse)
-library(gt)
-library(ggplot2)
-library(labelled)
-
-library(xgboost)
-
+#| label: setup
 ```
 
 # Importation des données
 
 ```{r}
+#| echo: true
+
+
 train <- read.csv("data/train.csv", na.strings = "NA")
 test <- read.csv("data/test.csv", na.strings = "NA")
 
@@ -103,39 +50,31 @@ b <- test %>%
 data <- bind_rows(a, b)
 ```
 
-::: {.callout-caution title="basic information about  data" collapse="true"}
-```{r}
-#| code-fold: show 
-
-skimr::skim(data)
-
-```
-
 ```{r}
 data %>%
-  slice_head(n = 6) %>%
+  slice_head(n = 12) %>%
   gt_trabi() %>%
   tab_source_note(md("Source : kaggle"))
 
 ```
-:::
 
-::: {.callout-caution title="Reading the text file line by line" collapse="true"}
 ```{r}
-#| eval: false
-lines <- readLines("data/data_description.txt")
-cat(lines, sep = "\n")
+#| code-fold: show 
+skimr::skim(data) 
 ```
 
 ```{r}
-data_information(train)
-
+search_vars_bs4dash()
 ```
-:::
+```{r}
+search_vars_bs4dash("main color")
+```
+
 
 ```{r}
 #| echo: false
-#| layout-ncol: 2
+#| eval: false
+#| layout-nrow: 1
 #| fig-cap: "missing"
 #| fig-subcap: 
 #|   - "train"
@@ -146,15 +85,7 @@ missing_variables(test)
 ```
 
 ```{r}
-#| echo: false
-#| layout-ncol: 2
-#| fig-cap: "missing"
-#| fig-subcap: 
-#|   - "train"
-#|   - "test"
-
-missing_loliplot(train)
-missing_loliplot(test)
+missing_loliplot(data)
 ```
 
 ```{r}
@@ -177,15 +108,9 @@ on observe que certaines variables ont des valeurs manquantes qui sont liées
 
 ```{r}
 #| fig-cap: "type de variable"
-#| fig-subcap: 
-#|   - "train"
-#|   - "test"
-#| layout-nrow: 2
-#| layout-ncol: 2
 
 # j'ai enlever integer car R compte les variables de type integer parmi les numériques.
-var_type_viz_1(train)
-var_type_viz_1(test)
+var_type_viz_1(data)
 ```
 
 # exploration des données via l'application shiny
@@ -195,7 +120,10 @@ var_type_viz_1(test)
 ## Variable cible (SalePrice)
 
 ```{r}
+#| echo: true
+
 summary(train$SalePrice)
+
 ```
 
 ```{r}
@@ -223,6 +151,7 @@ print(paste("il y a", a, "modalités"))
 ### distribution
 
 ```{r}
+  
 train$MSSubClass <- as.character(train$MSSubClass)
 
 var_quali_viz_2(data = train, var = MSSubClass)
@@ -246,27 +175,34 @@ on remarque que lavariable *MSSubClass* permet de bien discriminer la vairiable 
 
 ## exemple de Variables quantitatives(LotFrontage)
 
+
+
 ```{r}
+data %>% select(where(is.numeric)) %>% names()
+```
+
+
+```{webr-r}
 summary(train$LotFrontage)
 ```
 
-```{r}
+```{webr-r}
 missing_viz_1(data = train, class = LotFrontage)
 ```
 
-```{r}
+```{webr-r}
 var_quanti_viz_1(data = train, LotFrontage)
 ```
 
-```{r}
+```{webr-r}
 var_quanti_viz_2(data = train, var = LotFrontage, adjust = 1)
 ```
 
-```{r}
+```{webr-r}
 var_quanti_viz_3(data = train, var = LotFrontage)
 ```
 
-```{r}
+```{webr-r}
 var_cible_quanti(data = train, var = LotFrontage)
 ```
 
@@ -299,8 +235,7 @@ if ( a > 0.42577 | a < 0 ){
 }else{
     result <- (1 - a / 0.42577) * 100
   sprintf("%.2f %%", result)
-}
-}
+} }
 ```
 
 ## meilleur score actuel su kaggle
@@ -571,6 +506,14 @@ sur les donnée de train, le rmse du modèles de reférence est : Puisque le pro
 
 on analyse les variables qui pourraient être transformée en variables binaires pour vérifer si cette transformation améliore ou réduit la variance
 
+
+
+
+:::callout-important
+Please switch `{{shinylive-r}}` to `{shinylive-r}`. We've suppressed this example from running by using `{{}}`.
+:::
+
+
 ```{r}
 a <- train %>%
   mutate( OpenPorchSF = ifelse(OpenPorchSF == 0, "No", "Yes") )
@@ -786,12 +729,6 @@ var_type_viz_1(data)
 
 ```
 
-## \>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>
-
-```{r}
-skimr::skim(data)
-```
-
 ```{r}
 library(missForest)
 # data.imp <- missForest(data, verbose = TRUE, maxiter = 8 , ntree = 50, replace = TRUE)
@@ -799,14 +736,14 @@ data <- read.csv("inputed_data.csv", na.strings = "NA")
 ```
 
 ```{r}
-colSums(is.na(data.imp$ximp))
+#colSums(is.na(data.imp$ximp))
 ```
 
 ## on enlève les modalités des variables cateégorielles et on les rempplace par des valeur manquantes qu'on va inputer à nouveau par la methode de miss forest.
 
 ```{r}
-data <- data.imp$ximp
-sum(is.na(data))
+#data <- data.imp$ximp
+#sum(is.na(data))
 ```
 
 ```{r}
@@ -841,1026 +778,74 @@ var_type_viz_1(data)
 #write.csv(data.imp$ximp, file = "inputed_data.csv", row.names = FALSE)
 ```
 
-# \>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>\>
-
 ```{r}
+#| eval: false
+#| echo: false
 data <- read.csv("inputed_data.csv", na.strings = "NA")
 sum(is.na(data))
 ```
 
-# colinéarité
+# CART
 
-## Matrice de corrélation
+elles sont assez performantes, non paramétriques et non linéaires. Dans le principe, elles vont partitionner les individus en produisant des groupes d’individus les plus homogènes possible du point de vue de la variable à prédire, en tenant compte d’une hiérarchie de la capacité prédictive des variables considérées.
+
+à chaque itéaration, une variable et le seuil de division qui offrent la meilleure séparation sont choisis, et les données sont divisées en deux sous-groupes (nœuds enfants).
+
+donc l'algorythme CART réalisé sur une variable pourait être un bon indicateur sur les bornes de dicretisation afin de créer des groupes homogènes et distincts.
+
+Ce code permet de voir si c'est une bonne idée de discrétiser une variable ou non, donc à partir du split optimal, on calcul le R2 en considérant la moyenne de chaque classe comme une prediction du modèle
 
 ```{r}
-library(dplyr)
-library(igraph)
-data$MSSubClass <- as.character(data$MSSubClass)
-data$OverallQual <- as.character(data$OverallQual)
-data$OverallCond <- as.character(data$OverallCond)
-data$Fireplaces <- as.character(data$Fireplaces)
-data$GarageCars <- as.character(data$GarageCars)
-data$BsmtFullBath <- as.character(data$BsmtFullBath)
-data$BsmtHalfBath <- as.character(data$BsmtHalfBath)
-data$FullBath <- as.character(data$FullBath)
-data$HalfBath <- as.character(data$HalfBath)
-data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
-data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
-data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
-data$MoSold <- as.character(data$MoSold)
-
-
+train <- data[1:nrow(train), ]
+train$SalePrice = label
 ```
 
-la variable categorielle qui discrimine le mieux le prix
+## discrestisation par CART
+
+les dernières lignes permetent de savoir quelles sont les moyennes des diférents noeud et le mse associé à chaque node si la moyenne du node etait la prediction
 
 ```{r}
-library(dplyr)
-library(ggplot2)
-library(rlang)
+cart_model <- rpart(SalePrice ~ LotArea, data = train, method = "anova")       
+#summary(cart_model)
 
-cat_selection <- data[1:nrow(train), ]
-cat_selection$SalePrice <- label
+# Assigner chaque observation à un nœud
+train$node <- cart_model$where
 
+# Calculer la moyenne de chaque nœud
+node_means <- aggregate(SalePrice ~ node, data = train, FUN = mean)
+names(node_means)[2] <- "NodeMean"
 
-cat_feature_importance(cat_selection, SalePrice)
-
-```
-
-# anova
-
--   **si on suppose qu'aucune valeur aberrante significative** dans aucune cellule du plan
-
-L'ANOVA repose sur une idée simple : si la variation moyenne entre les groupes est suffisamment grande par rapport à la variation moyenne au sein des groupes (variance intra-groupe), on peut conclure que les moyennes des groupes ne sont pas toutes égales.
-
-La statistique F se calcule comme suit : variance entre les groupes / variance intra-groupe.
-
-Cela ressemble au clustering, où l'on cherche à maximiser la variance entre les groupes tout en minimisant la variance au sein des groupes. Une valeur élevée de F indique que la variable qualitative discrimine bien la variable cible.
-
-![](images/clipboard-4150061290.png)
-
-::: success
-Notez qu’une valeur petite de F (F \< 1) indique qu’il n’y a pas de différence significative entre les moyennes des échantillons comparés.
-
-Cependant, un ratio plus élevé signifie que les variations entre les moyennes des groupes sont très différentes les unes des autres par rapport à la variation des observations individuelles dans chaque groupe.
-:::
-
--   `ggpubr` pour créer facilement des graphiques prêts à la publication
-
--   `rstatix` offre des fonctions R conviviales pour des analyses statistiques faciles à réaliser
-
--   `datarium`: contient les jeux de données requis pour ce chapitre
-
-```{r}
-library(tidyverse)
-library(ggpubr)
-library(rstatix)
+# Fusionner les moyennes des nœuds avec les données d'origine
+train <- merge(train, node_means, by = "node")
 ```
 
 ```{r}
-library(dplyr)
-library(ggplot2)
-library(rlang)
-
-cat_selection <- data[1:nrow(train), ]
-cat_selection$SalePrice <- label
-
-lm_R2 <- function(y, x){
-  model <- lm(y ~ x)
-  rsq <- summary(model)$r.squared
-  rsq
-}
-
-num_feature_importance <- function(data, label){
-  
-  var_name <- as_label(enquo(label))
-  
-  num_data <- data %>%
-    dplyr::select(where(is.numeric))
-  
-  num_vars <- colnames(num_data)
-  num_vars <- num_vars[num_vars != var_name]  # Exclure la variable cible
-  n <- nrow(data)
-  
-  R2 <- c()
-  for (var in num_vars) {
-    x <- data[[var]]
-    y <- data[[var_name]]
-    rsq <- lm_R2(y, x)
-    R2 <- c(R2, rsq)
-  }
-  
-  df <- data.frame(variables = num_vars, R2 = R2)
-  
-  df %>%
-    arrange(desc(R2)) %>%  # Ordonner par R² du plus grand au plus petit
-    mutate(variables = factor(variables, levels = rev(variables))) %>%  # Définir l'ordre des facteurs
-    ggplot(aes(x = variables, y = R2)) +
-    geom_segment(aes(xend = variables, yend = 0), color = "grey") +
-    geom_point(size = 2, color = "red") +
-    coord_flip() +
-    labs(title = "Variables numériques qui expliquent le mieux la variance de SalePrice",
-         x = "",
-         y = "R²") +
-    theme_minimal()
-}
-
-num_feature_importance(cat_selection, SalePrice)
-
-
+disc <- is_discretisable(train, LotArea, SalePrice)
+cuts <- sort(disc$cuts)
+cuts
 ```
 
 ```{r}
-tools <- numerical_corelation(data, 0.6)
-tools
-```
+cuts <- sort(cuts)
 
--   tools \<- numerical_corelation(data, 0.6) tools**%IncMSE** (Mean Decrease in Accuracy) : Mesure combien l'erreur du modèle augmente lorsqu'une variable est permutée. Plus la valeur est élevée, plus la variable est importante.
+num_intervals <- length(cuts) + 1
+ 
+interval_labels <- paste0("class_", 1:num_intervals)
 
--   **IncNodePurity** (Mean Decrease in Gini) : Mesure la réduction totale de l'impureté de Gini obtenue en utilisant cette variable dans le modèle. Plus la valeur est élevée, plus la variable est importante.
+train$class <- cut(train$LotArea, breaks = c(-Inf, cuts, Inf), labels = interval_labels)
 
-```{r}
-library(randomForest)
-train_f <- function(data){
-  cleaned_train <- data[1:nrow(train), ]
-  cleaned_train$SalePrice = label
-  
-  cleaned_train
-}
 
-# i in 1 : n
-i <- 1
-n <- nrow(tools$data)
+train$class <- factor(train$class, levels = interval_labels)
 
-var <- strsplit( tools$data[1,2] %>% pull, "\\s+")[[1]]
-var <- gsub(",$", "", var)
-var <- c(var, "SalePrice")
-df <- train_f(data) %>% dplyr::select(var)
-
-model <- randomForest(SalePrice ~ ., data = df, importance = TRUE)
-
-viz_rf_model_2(model)
-
-```
-
-```{r}
-data <- data %>% dplyr::select(-c(X1stFlrSF, X2ndFlrSF))
-```
-
-```{r}
-data <- data %>% dplyr::select(-c(TotalBsmtSF,	LotFrontage, 	BsmtFinSF1, BsmtUnfSF, GarageArea))
-```
-
-## Corrélations V de Cramer :
-
-```{r}
-# Fonction pour créer la matrice des p-values
-# create_chi2_pvalue_matrix(data)
-```
-
-le V de Cramer est basé sur la statistique du chi-carré et varie de 0 à 1, où 0 indique aucune association et 1 indique une association parfaite.
-
-```{r}
-tools <- categorical_corelation(data, 0.65)
-tools
-```
-
-```{r}
-library(randomForest)
-train_f <- function(data){
-  cleaned_train <- data[1:nrow(train), ]
-  cleaned_train$SalePrice = label
-  
-  cleaned_train
-}
-
-# i in 1 : n
-i <- 1
-n <- nrow(tools$data)
-
-var <- strsplit( tools$data[1,2] %>% pull, "\\s+")[[1]]
-var <- gsub(",$", "", var)
-var <- c(var, "SalePrice")
-df <- train_f(data) %>% select(var)
-
-model <- randomForest(SalePrice ~ ., data = df, importance = TRUE)
-
-viz_rf_model_2(model)
-
-```
-
-```{r}
-data <- data %>% dplyr::select(-c(GarageType, BldgType, HouseStyle, MSZoning, ExterQual, Exterior2nd, BsmtFinSF2, GarageCond, garage_age))
-```
-
-## Analyse de la variance inflation factor (VIF)
-
-```{r}
-
-
-cleaned_train <- data[1:nrow(train), ]
-
-cleaned_train$SalePrice = label
-
-cleaned_test <- data[(nrow(train) + 1):nrow(data), ]
-
-
-```
-
-```{r}
-dim(cleaned_train)
-dim(train)
-```
-
-```{r}
-dim(cleaned_test)
-dim(test)
-```
-
-```{r}
-cleaned_train <- cleaned_train %>%
-  mutate(across(where(is.integer), as.numeric))
-
-
-var_type_viz_1(cleaned_train)
-```
-
-```{r}
-df1 <- cleaned_train %>% dplyr::select(where(is.numeric ))
-
-cat_vars <- df1 %>% colnames()
-
-for (i in cat_vars) {
-  Q1 <- quantile(df1[[i]], 0.25)
-  Q3 <- quantile(df1[[i]], 0.75)
-  IQR <- Q3 - Q1
-  
-  cleaned_train <- cleaned_train[cleaned_train[[i]] <= (Q3 + 1.5 * IQR), ]
-  cleaned_train <-cleaned_train[cleaned_train[[i]] >= (Q1 - 1.5 * IQR), ]
-  cleaned_train <- cleaned_train[complete.cases(cleaned_train), ]  # Supprimer les lignes avec des valeurs manquantes
-  cleaned_train <- droplevels(cleaned_train)  # Supprimer les niveaux de facteur inutilisés
-}
-
-# Affichage des premières lignes du dataframe df1
-print(head(df1))
-
-# Affichage de l'inference
-cat(sprintf("\n\033[1mInference:\033[0m\nBefore removal of outliers, The dataset had %d samples.\n", nrow(df1)))
-cat(sprintf("After removal of outliers, The dataset now has %d samples.\n", nrow(cleaned_train)))
-
-```
-
-## One-Hot Encoding
-
-convertit chaque catégorie unique en une colonne binaire.
-
--   *remove_first_dummy = TRUE*: éviter la multicolinéarité
-
--   *remove_selected_columns = TRUE*: Supprime les colonnes originales après l'encodage one-hot.
-
-```{r}
-data <- data %>% dplyr::select(-c( BedroomAbvGr, LowQualFinSF, Electrical, HeatingQC, Foundation, ExterCond, MasVnrType , RoofStyle, LandSlope, LotShape, Alley  ))
-```
-
-```{r}
-library(fastDummies)  
-
-data_onehot <- dummy_cols(data, remove_first_dummy = TRUE, remove_selected_columns = TRUE)
-```
-
-```{r}
-
-tools <- numerical_corelation(data_onehot, 0.80)
-tools$data %>% gt_trabi()
-```
-
-```{r}
-library(randomForest)
-train_f <- function(data){
-  cleaned_train <- data[1:nrow(train), ]
-  cleaned_train$SalePrice = label
-  
-  cleaned_train
-}
-
-# i in 1 : n
-i <- 1
-n <- nrow(tools$data)
-
-var <- strsplit( tools$data[4,2] %>% pull, "\\s+")[[1]]
-var <- gsub(",$", "", var)
-var <- c(var, "SalePrice")
-df <- train_f(data_onehot) %>% dplyr::select(var)
-
-model <- randomForest(SalePrice ~ ., data = df, importance = TRUE)
-
-viz_rf_model_2(model)
-
-```
-
-```{r}
-data_onehot <- data_onehot %>%
-  dplyr::select(-c( BsmtQual_No.Basement, BsmtCond_No.Basement, BsmtExposure_No.Basement, BsmtFinType1_No.Basement, KitchenAbvGr_2, GarageFinish_No.Garage, SaleCondition_Partial))
-```
-
-```{r}
-data_onehot <- data_onehot %>%
-  dplyr::select(-c(KitchenAbvGr_1))
-```
-
-```{r}
-nrow(data_onehot[1:nrow(train), ])
-```
-
-```{r}
-
-
-```
-
-# Linear Regression GLM
-
-```{r}
-oh_cleaned_train <- data_onehot[1:nrow(train), ]
-oh_cleaned_train$SalePrice = label
-
-oh_cleaned_test <- data_onehot[(nrow(train) + 1):nrow(data_onehot), ]
-```
-
-```{r}
-
-modele_1 = lm(SalePrice ~ ., data = oh_cleaned_train)
-predict(modele_1, oh_cleaned_test) %>% as.data.frame() %>%head()
-
-
-residuals <- modele_1$residuals
-```
-
-## Relation linéaire
-
-l'intensité de la relation linéaire entre la variable indépendante, x, et la variable dépendante, y est mesurée par le nombre d'étoile
-
-```{r}
-summary(modele_1)
-
-par(mfrow=c(2,2)) 
-plot(modele_1) 
-```
-
-## Indépendance
-
-Les résidus sont indépendants. En particulier, il n’y a pas de corrélation entre les résidus consécutifs dans les données de séries chronologiques.
-
-```{r}
-# Produire le graphique d'autocorrélation des résidus
-acf(residuals, main = "Graphique d'autocorrélation des résidus")
-```
-
-Test de Durbin-Watson :
-
--   Une valeur proche de 2 indique une absence d'autocorrélation.
-
--   Une valeur beaucoup plus basse que 2 suggère une autocorrélation positive.
-
--   Une valeur beaucoup plus élevée que 2 suggère une autocorrélation négative.
-
-```{r}
-# Effectuer le test de Durbin-Watson
-dw_test <- dwtest(modele_1)
-
-# Afficher les résultats du test de Durbin-Watson
-print(dw_test)
-```
-
-## Homoscédasticité : Les résidus ont une variance constante à chaque niveau de x.
-
-```{r}
-plot.res(modele_1)
-```
-
--   Si le graphique montre que les résidus sont répartis de manière aléatoire autour de zéro, sans motif clair , cela suggère que les résidus sont homoscédastiques.
-
--   Si vous voyez un motif (par exemple, les résidus augmentent ou diminuent systématiquement avec les valeurs ajustées), cela suggère une hétéroscédasticité.
-
-**Test de Breusch-Pagan** : Ce test statistique vérifie formellement l'homoscédasticité des résidus.
-
-```{r}
-library(lmtest)
-
-# Effectuer le test de Breusch-Pagan
-bp_test <- bptest(modele_1)
-
-# Afficher les résultats du test de Breusch-Pagan
-print(bp_test)
-```
-
--   Si la valeur p est inférieure à un seuil (typiquement 0,05), je peux rejeter l'hypothèse nulle d'homoscédasticité, ce qui suggère une hétéroscédasticité.
-
--   Si la valeur p est supérieure au seuil, vous ne pouvez pas rejeter l'hypothèse nulle, ce qui suggère que les résidus sont homoscédastiques.
-
-## Normalité : Les résidus du modèle sont normalement distribués.
-
-test de **Shapiro-Wilk**, qui est couramment utilisé pour évaluer la normalité des données.
-
-```{r}
-
-# Effectuer le test de Shapiro-Wilk pour tester la normalité des résidus
-shapiro_test <- shapiro.test(residuals)
-
-# Afficher les résultats du test de Shapiro-Wilk
-print(shapiro_test)
-```
-
--   Si la valeur p est inférieure à un seuil (typiquement 0,05), on rejete l'hypothèse nulle selon laquelle les résidus suivent une distribution normale.
-
--   Si la valeur p est supérieure au seuil, on ne peut pas rejeter l'hypothèse nulle, ce qui suggère que les résidus peuvent être considérés comme suivant une distribution normale.
-
-```{r}
-files <- data.frame(
-  Id = test$Id,
-```
-
-
-```{r}
-```
-
-
-```{r}
-```
-
-
-```{r}
-```
-
-
-```{r}
-SalePrice = predict(modele_1, cleaned_test)
-)
-rownames(files) <- NULL
-files %>% head(10) %>% gt_trabi()
-
-write.csv(files, file = "output.csv", row.names = FALSE)
-
-```
-
-# Stepwise variable selection
-
-```{r}
-```
-
-```{r}
-# Charger les packages nécessaires
-library(stats)      # Contient lm, add1, update, drop1
-library(ggfortify)
-```
-
-```{r}
-M0 <- lm(SalePrice ~ 1, data = oh_cleaned_train) # null model
-M1 <- lm(SalePrice ~ ., data = oh_cleaned_train) # full model
-summary(M1)
-```
-
-```{r}
-autoplot(M1, which=1, ncol=1)
-```
-
-```{r}
-autoplot(M1, which=4, ncol=1)
-```
-
-```{r}
-#step_model <- add1(M0, scope = Mf, data = oh_cleaned_train, test = "F")
-#step_model
-
-```
-
--   `add1` est utilisé pour évaluer l'ajout de chaque variable explicative possible à partir du modèle nul `M1` en considérant le modèle complet `Mf` comme portée (`scope`).
-
-```{r}
-#M1 <- update(M0, . ~ .+ LotArea + GrLivArea + WoodDeckSF, data = oh_cleaned_train)
-#autoplot(M2, which=1, ncol=1)
-```
-
-Forward selection Usually start from the null model. Every variable outside the current model <none> can be added (+) one at time at each step until AIC is no better (<none> has the lowest AIC in the top of the list).
-
-```{r}
-# Forward using AIC
-# M1.forw <- step(M0, scope = list(lower = M0,  upper = M1), direction = "forward", k = 2)
-```
-
-```{r}
-summary(M1.forw)
-```
-
-```{r}
-extractAIC(M1.forw)
-```
-
-Stepwise selection Start from any model such as the full model. Every variable outside the current model <none> can be added (+) and those inside can be dropped (-) one at time at each step until AIC is no better.
-
-```{r}
-M1 <- lm(SalePrice ~ ., data = oh_cleaned_train) # full model
-M1.step <- step(M1, scope = list(lower = SalePrice ~ 1,  upper = SalePrice ~ .),direction = "both", k = 2)
-```
-
-```{r}
-extractAIC(M1.step)
-```
-
-# regularisation
-
-la régularisation permet d'éviter le sur-ajustement en limitant la capacité d’apprentissage ou la flexibilité d’un modèle d’apprentissage machine.
-
-#### La régression lasso est une méthode que nous pouvons utiliser pour ajuster un modèle de régression lorsque la multicollinéarité est présente dans les données.
-
-la régression des moindres carrés tente de trouver des estimations de coefficients qui minimisent la somme des résidus au carré (RSS) :
-
-**RSS = Σ(y~J~ – ŷ~J~)2**
-
-À l’inverse, la régression lasso cherche à minimiser les éléments suivants :
-
-**RSS + λΣ\|β~j~\|**
-
-où *j* va de 1 à *p* variables prédictives et λ ≥ 0.
-
-Ce deuxième terme de l’équation est connu sous le nom de *pénalité de rétrécissement*. Dans la régression lasso, nous sélectionnons une valeur pour λ qui produit l’erreur quadratique moyenne la plus faible possible.
-
-### **Étape 2 : Ajuster le modèle de régression au lasso**
-
-Ensuite, nous utiliserons la fonction **glmnet()** pour ajuster le modèle de régression lasso et spécifier **alpha=1**.
-
--   \alpha = 0 équivaut à utiliser la régression de ridge
-
--   \$ 0\< \alpha \< 1\$ à une valeur comprise entre 0 et 1 équivaut à utiliser un elactic net.
-
-Pour déterminer la valeur à utiliser pour lambda, nous allons effectuer une [validation croisée k-fold](https://www.statology.org/k-fold-cross-validation/) et identifier la valeur lambda qui produit l’erreur quadratique moyenne (MSE) la plus faible.
-
-Notez que la fonction **cv.glmnet()** effectue automatiquement une validation croisée k-fold en utilisant k = 10 folds.
-
-5.7 Librairie glmnet
-
-L’utilisation de la librairie glmnet fournit des résultats plus rapides, ce qui peut s’avérer important pour des données de grande dimension.
-
-Par contre, on ne peut pas traiter à priori des variables qualitatives. Nous allons donc devoir créer des vecteurs avec des variables indicatrices des diverses modalités pour les variables qualitatives .
-
-```{r}
-alpha = 1
-
-
-lasso_label <- label
-lasso_train <- as.matrix(data_onehot[1:nrow(train), ])
-lasso_test <- as.matrix(data_onehot[(nrow(train) + 1):nrow(data_onehot), ])
-
-library(glmnet)
-
-#perform k-fold cross-validation to find optimal lambda value
-cv_model <- cv.glmnet(lasso_train, lasso_label, alpha = alpha )
-
-#find optimal lambda value that minimizes test MSE
-best_lambda <- cv_model$lambda.min
-best_lambda
-
-#produce plot of test MSE by lambda value
-plot(cv_model)
-```
-
-La valeur lambda qui minimise l’ESM de test s’avère être \`r best_lambda\`
-
-### **Étape 3 : Analyser le modèle final**
-
-Enfin, nous pouvons analyser le modèle final produit par la valeur lambda optimale.
-
-Nous pouvons utiliser le code suivant pour obtenir les estimations de coefficient pour ce modèle :
-
-```{r}
-#find coefficients of best model
-best_model <- glmnet(lasso_train, lasso_label, alpha = alpha, lambda = best_lambda)
-coef(best_model)
-```
-
-Aucun coefficient n’est affiché pour le **prédicteur remod_since_3** car la régression lasso a réduit le coefficient à zéro. Cela signifie qu’il a été complètement retiré du modèle parce qu’il n’était pas assez influent.
-
-La régression de ridge réduit tous les coefficients *vers* zéro, mais la régression lasso a le potentiel de supprimer les prédicteurs du modèle en réduisant *complètement* les coefficients à zéro.
-
-Nous pouvons également utiliser le modèle de régression lasso final pour faire des prédictions sur de nouvelles observations
-
-nous pouvons calculer le R au carré du modèle sur les données d’entraînement 
-
-```{r}
-#use fitted best model to make predictions
-R2_coef <- function(y_pred, y){
-  #find SST and SSE
-sst <- sum((y - mean(y))^2)
-sse <- sum((y_pred - y)^2)
-
-#find R-Squared
-rsq <- 1 - sse/sst
-rsq
+discretise <- function( data, var){
   
 }
-
-
-
-y_predicted <- predict(best_model, s = best_lambda, newx = lasso_train)
-
-R2_coef(y_predicted, lasso_label)
 ```
 
 ```{r}
-y_predicted <- predict(best_model, s = best_lambda, newx = lasso_test)
-files <- data.frame(
-  Id = test$Id,
-  SalePrice = y_predicted
-)
-rownames(files) <- NULL
-
-names(files) <- c("Id", "SalePrice")
-
-files %>% head(10) %>% gt_trabi()
-
-write.csv(files, file = "output.csv", row.names = FALSE)
-
-```
-
-# random forest
-
-```{r}
-# Ajuster le modèle de forêt aléatoire
-model <- randomForest(SalePrice ~ ., data = cleaned_train, importance = TRUE)
-viz_rf_model_2(model)
+var_cible_quali_1(train, class, SalePrice)
 ```
 
 ```{r}
-library(caret)
-library(randomForest)
-
-
-# Définir les paramètres de la validation croisée
-control <- trainControl(method = "cv",
-                        number = 5)
-
-# Ajuster le modèle de forêt aléatoire avec la validation croisée
-set.seed(123) # Pour la reproductibilité
-model <- train(SalePrice ~ ., data = cleaned_train, method = "rf", trControl = control, importance = TRUE)
-
-# Afficher les résultats
-print(model)
-
-# Importance des variables
-varImpPlot(model$finalModel)
-
+var_cible_quanti(train, LotArea)
 ```
-
-```{r}
- importance(model$finalModel) %>%
-    data.frame() %>%
-    rownames_to_column("term") %>%
-  arrange(desc(X.IncMSE)) %>%  # Ordonner par X.IncMSE du plus grand au plus petit
-  mutate(term = factor(term, levels = rev(term))) %>%  # Définir l'ordre des facteurs
-  filter(X.IncMSE < 0) %>%
-    ggplot(aes(x = term, y = X.IncMSE)) +
-    geom_segment(aes(xend = term, yend = 0), color = "grey") +
-    geom_point(size = 2, color = "blue") +
-    coord_flip() +
-    labs(title = "random forest fearture importance",
-         x = "",
-         y = "%IncMSE") +
-    theme_minimal()
-```
-
-```{r}
-files <- data.frame(
-  Id = test$Id,
-  SalePrice = predict(model, cleaned_test)
-)
-rownames(files) <- NULL
-files %>% head(10) %>% gt_trabi()
-
-write.csv(files, file = "output.csv", row.names = FALSE)
-
-```
-
-```{r}
-modlin = lm(SalePrice ~ ., data = cleaned_train)
-summary(modlin) # noter les p-valeurs
-
-
-
-plot.res=function(x,y,titre="")
-{
-plot(x,y,col="blue",ylab="Résidus",
-xlab="Valeurs predites",main=titre)
-abline(h=0, col="green")
-}
-
-
-
-res=residuals(modlin)
-#Regroupement des graphiques sur la meme page
-par(mfrow=c(1,2))
-
-hist(residuals(modlin))
-
-
-qqnorm(res)
-qqline(res, col = 2)
-
-
-# retour au graphique standard
-par(mfrow=c(1,1))
-plot.res(predict(modlin),res)
-```
-
-## Sélection de modèle par sélection de variables
-
-# Sélection par AIC et backward
-
-Akaike Information Criterion (AIC) L'AIC est un critère utilisé pour comparer différents modèles de régression et choisir celui qui offre le meilleur équilibre entre qualité d'ajustement et complexité du modèle. Il est défini comme suit :
-
-$$ AIC = 2k - 2ln(L)$$
-
-où : - $k$ est le nombre de paramètres du modèle. - $k$ est la vraisemblance maximale du modèle.
-
-Utilisation de l'AIC dans les modèles linéaires Lors de l'ajustement de modèles linéaires, l'AIC peut être utilisé pour sélectionner les variables explicatives qui rendent le modèle le plus efficace. Un modèle avec un AIC plus bas est préféré, car il suggère un bon compromis entre une faible erreur de prédiction et une faible complexité.
-
-```{r}
-library(MASS)
-
-modselect_b <- stepAIC(modlin2, ~. , trace=TRUE, direction = c("backward")) 
-
-summary(modselect_b)
-```
-
-```{r}
-train %>% distinct(FullBath)
-
-
-test %>% distinct(FullBath)
-```
-
-```{r}
-output <- data.frame(
-  Id = Id,
-  SalePrice = predict(modselect_b, test)
-  )
-
-write.csv(output, file = "data_AIC.csv", row.names = FALSE)
-
-```
-
-# Méthodes de sélection de modèles
-
-Pour sélectionner automatiquement la meilleure combinaison de variables prédictives pour construire un modèle prédictif optimal. Il s’agit notamment des meilleures méthodes de sélection de sous-ensembles, de la régression par étapes et de la régression pénalisée (modèles de régression en crête, en lasso et en filet élastique). Nous présentons également des méthodes de régression basées sur les composantes principales, qui sont utiles lorsque les données contiennent plusieurs variables prédictives corrélées.
-
-# (repeated) k-fold cross-validation
-
-La méthode de validation croisée k-fold évalue la performance du modèle sur différents sous-ensembles de données d’entraînement, puis calcule le taux d’erreur de prédiction moyen.
-
-L’algorithme est le suivant :
-
-1.  Diviser aléatoirement l’ensemble de données en k-sous-ensembles (ou k-fold) (par exemple 5 sous-ensembles)
-
-2.  Réserver un sous-ensemble et entraîner le modèle sur tous les autres sous-ensembles
-
-3.  Tester le modèle sur le sous-ensemble réservé et enregistrer l’erreur de prédiction
-
-4.  Répéter ce processus jusqu’à chacun des k
-
-K-fold cross-validation (CV) is a robust method for estimating the accuracy of a model.
-
-# Modèle linéaire
-
-```{r}
-library(caret)
-
-
-# Define training control
-set.seed(123) 
-
-train.control <- trainControl(method = "repeatedcv",
-                              number = 10,
-                              repeats = 3 )
-# Train the model
-lm_model <- train(SalePrice ~., data = cleaned_train, method = "lm",
-               trControl = train.control)
-
-# Summarize the results
-print(lm_model)
-
-print(lm_model$yLimits)
-```
-
-## glm
-
-```{r}
-train_control <- trainControl(method = "repeatedcv",
-                              number = 10,
-                              repeats = 3 )
-
-# Ajuster le modèle glm avec validation croisée
-glm_model <- train(SalePrice ~ ., data = train, method = "glm", family = "gaussian", trControl = train_control)
-
-print(glm_model)
-```
-
-```{r}
-plot( fitted(glm_model), residuals(glm_model) )
-```
-
-Le réglage des hyperparamètres est une étape critique du machine learning. Il s’agit de trouver le meilleur ensemble d’hyperparamètres qui maximisent les performances du modèle.
-
-Les hyperparamètres sont des paramètres de configuration utilisés pour contrôler le processus d’entraînement d’un modèle.
-
-Différents hyperparamètres peuvent avoir un impact significatif sur les performances de votre modèle. Le réglage de ces paramètres permet de:
-
-Améliorer la précision du modèle. Réduire le sur-ajustement. Optimisez le temps de formation du modèle.
-
-```{r}
-install.packages("caret")
-install.packages("xgboost")
-install.packages("e1071")  # Required for caret's train function
-
-library(e1071)
-library(caret)
-library(xgboost)
-
-# Load your data
-# Assume dtrain is already created using xgb.DMatrix
-
-# Define the parameter grid
-grid <- expand.grid(
-  nrounds = 100,
-  eta = c( 0.2, 0.3),
-  max_depth = c(10, 12, 14),
-  gamma = c(0,  0.2),
-  colsample_bytree = c(0.7, 1.0),
-  min_child_weight = c( 5, 7),
-  subsample = c(0.6, 0.8)
-)
-
-# Set up training control
-train_control <- trainControl(
-  method = "cv",           # Use cross-validation
-  number = 5,              # Number of folds in cross-validation
-  verboseIter = TRUE,      # Print training log
-  allowParallel = TRUE     # Allow parallel computation
-)
-
-# Train the model using caret
-xgb_train <- train(
-  x = as.matrix(train),    # Your training data (features)
-  y = label,             # Your training labels
-  trControl = train_control,
-  tuneGrid = grid,
-  method = "xgbTree",
-  verbose = TRUE
-)
-
-# Print the best parameters found
-print(xgb_train$bestTune)
-
-# Train the final model with the best parameters
-final_params <- list(
-  booster = "gbtree",
-  objective = "reg:squarederror",
-  eta = xgb_train$bestTune$eta,
-  max_depth = xgb_train$bestTune$max_depth,
-  gamma = xgb_train$bestTune$gamma,
-  colsample_bytree = xgb_train$bestTune$colsample_bytree,
-  min_child_weight = xgb_train$bestTune$min_child_weight,
-  subsample = xgb_train$bestTune$subsample
-)
-
-# Train the XGBoost model with the best parameters
-xgb_model <- xgb.train(params = final_params, dtrain, nrounds = 100)
-
-# Evaluate the model
-preds <- predict(xgb_model, dtest)
-
-```
-
-```{r}
-#| eval: false
-
-
-library(devtools)
-install_github("DillonHammill/DataEditR")
-
-# Load required packages
-library(DataEditR)
-
-# Save output to R object & csv file
-mtcars_new <- data_edit(iris,
-                        save_as = "mtcars_new.csv")
-```
-
-```{r}
-plot(model)
-```
-
-# 
-
-La marge d'erreur (E) est donnée par : $$ E = t_{\alpha/2} \cdot \frac{s}{\sqrt{n}}$$
-
-```{r}
-intervalle_confiance_GLM <- function(model, confidence_level = 0.95 ){
-  
-coeficients <- summary(model)$coefficients[, 1]
-ecart_type <- summary(model)$coefficients[, 2]
-
-
-# 1445 degrees of freedom
-n <- length( model$residuals)
-p <- length(coefficients(model))
-df <- n - p
-
-
-a <- confidence_level
-
-# Valeur critique de la t-distribution pour 95% de confiance
-t_critical <- qt(c((1-a)/2, 1 - (1-a)/2), df = df)
-
-lower_bound <- coeficients - t_critical[1] * ecart_type / sqrt(n)
-upper_bound <- coeficients + t_critical[2] * ecart_type / sqrt(n)
-
-intervalle_confiance <- cbind(lower_bound, upper_bound) %>%
-  round(2) %>%
-  as.data.frame() %>%
-  rownames_to_column("parametres")
-intervalle_confiance %>% gt_trabi()
-  
-  
-}
-
-
-intervalle_confiance_GLM(model = model, confidence_level = 0.95)
-```
-
-# Bagging et random forest
-
-```{r}
-result <- rforest(train, "SalePrice",  type = "regression", max.depth = 1)
-
-cv.rforest(result, mtry = 1:3, min.node.size = seq(1, 10, 5))
-```
-
-```{r}
-library(randomForest)
-
-
-# Entraîner le modèle Random Forest
-rf_model <- randomForest(SalePrice ~ ., data = train, ntree = 500, mtry = 10)
-
-# Afficher un résumé du modèle
-print(rf_model)
-```
-
-```{r}
-output <- data.frame(
-  Id = Id,
-  SalePrice = predict(rf_model, test)
-  )
-
-write.csv(output, file = "data_rf.csv", row.names = FALSE)
-
-```
-
-# Boosting
-
-```{r}
-train <- data_onehot[1:nrow(train), ]
-test <- data_onehot[(nrow(train) + 1):nrow(data), ]
-
-# Construct xgb.DMatrix object from  local file.
-dtrain <- xgb.DMatrix(data = as.matrix( train ), label = label, missing = NA)
-dtest <- xgb.DMatrix(data = as.matrix( test ))
-
-
-# Set XGBoost parameters
-params <- list(
-  booster = "gbtree",
-  objective = "reg:squarederror",
-  eta = 0.3,
-  max_depth = 6,
-  gamma = 0,
-  colsample_bytree = 1,
-  min_child_weight = 1,
-  subsample = 1
-)
-
-
-# Train the XGBoost model
-xgb_model <- xgb.train(params, dtrain, nrounds = 1000)
-
-```
-
-```{r}
-output <- data.frame(
-  Id = Id,
-  SalePrice = predict(xgb_model, dtest)
-  )
-
-write.csv(output, file = "dataxgboost.csv", row.names = FALSE)
-
-```
-
-# random forest

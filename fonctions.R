@@ -1,3 +1,16 @@
+
+library(rpart)
+library(styler)
+library(ggridges) 
+library(DataExplorer)
+library(naniar)
+library(tidyverse)
+library(gt)
+library(ggplot2)
+library(labelled)
+
+library(xgboost)
+
 library(ggridges)
 library(DataExplorer)
 library(naniar)
@@ -71,6 +84,7 @@ gt_trabi <- function(data){
       table.border.bottom.width = px(3)) %>%
     tab_source_note(md( "<br>@bineneothniel.tra <br> "))
 }
+
 
 # data ----
 train <- read.csv("data/train.csv", na.strings = "NA")
@@ -833,6 +847,7 @@ var_cible_quali_1 <- function(data, var,  label){
   var_name <- as_label(enquo(var))
   label_name <- as_label(enquo(label))
   
+  data[[var_name]] <- as.character(data[[var_name]])
   n <- nrow(data)
   
   grouped_data <- data %>%
@@ -859,8 +874,8 @@ var_cible_quali_1 <- function(data, var,  label){
       x = Inf,
       y = Inf,
       label = glue(
-        "<b><span style='color:blue'>R2      :</span></b> {round(R2, 2)} <br> 
-          <b><span style='color:blue'>RMSE      :</span></b> {round(RMSE, 2)} "
+        "<b><span style='color:blue'>R2      :</span></b> {round(R2, 3)} <br> 
+          <b><span style='color:blue'>RMSE      :</span></b> {round(RMSE, 3)} "
       ),
       hjust = 1.1,
       vjust = 1.1,
@@ -984,18 +999,21 @@ library(circlize)
 
 
 
-missing_heatmap <- function(data){
-  
+
+
+
+# Define the missing_heatmap function
+missing_heatmap <- function(data) {
   miss_data <- data %>%
     questionr::freq.na() %>%
     as.data.frame() %>%
     rownames_to_column("variables") %>%
-    filter( missing > 0 )
+    filter(missing > 0)
   
-  missing <- miss_data %>% distinct(variables) %>% as.vector()
+  missing <- miss_data %>% distinct(variables) %>% pull(variables)
   
   # Convert data to a matrix
-  data_matrix <- as.matrix( data %>% dplyr::select(missing$variables) )
+  data_matrix <- as.matrix(data %>% dplyr::select(all_of(missing)))
   
   # Create a logical matrix indicating missing values
   missing_data <- is.na(data_matrix)
@@ -1006,6 +1024,8 @@ missing_heatmap <- function(data){
   # Create the heatmap
   Heatmap(
     missing_data,
+    height = 600,
+    show_heatmap_legend = FALSE,
     name = "Missing Values",
     col = col_fun,
     show_row_names = TRUE,
@@ -1021,10 +1041,10 @@ missing_heatmap <- function(data){
     cluster_rows = FALSE,
     cluster_columns = FALSE
   )
-  
-  
 }
-missing_heatmap(data)
+
+missing_heatmap(train)
+
 
 library(circlize)
 
@@ -1289,10 +1309,6 @@ viz_lm_model_1 <- function(model, n){
     theme_minimal()
 }
 
-viz_lm_model_1(modele_1, 20)
-
-
-
 viz_rf_model_2 <- function(model){
   p1 <- importance(model) %>%
     data.frame() %>%
@@ -1334,8 +1350,8 @@ R2_coef <- function(y_pred, y){
   rsq
 }
 
-cat_feature_importance <- function(data, label){
-  
+
+cat_feature_importance <- function(data, label) {
   var_name <- as_label(enquo(label))
   
   cat_data <- data %>%
@@ -1348,14 +1364,13 @@ cat_feature_importance <- function(data, label){
   
   R2 <- c()
   for (var in cat_vars) {
-    
     grouped_data <- data %>%
       group_by(!!sym(var)) %>%
       summarise(mean_SalePrice = mean(!!sym(var_name), na.rm = TRUE))  # Calculate mean SalePrice for each group
     
     y <- rep(0, times = n)
     
-    for (i in 1:n){
+    for (i in 1:n) {
       ind <- which(grouped_data[[1]] == data[[var]][i])
       y[i] <- grouped_data$mean_SalePrice[ind]
     }
@@ -1372,8 +1387,158 @@ cat_feature_importance <- function(data, label){
     geom_segment(aes(xend = variables, yend = 0), color = "grey") +
     geom_point(size = 2, color = "blue") +
     coord_flip() +
-    labs(title = "Variables catégorielles qui expliquent le mieux la variance de SalePrice",
-         x = "",
-         y = "R²") +
+    labs(title = "Variables catégorielles qui expliquent le mieux la variance de SalePrice", x = "", y = "R²") +
     theme_minimal()
 }
+
+
+
+
+
+
+
+
+is_discretisable <- function(data, var, label) {
+  
+  var_name <- as_label(enquo(var))
+  label_name <- as_label(enquo(label))
+  
+  
+  formula_regress <- as.formula(paste(label_name, "~", var_name))
+  formula_cart <- formula_regress
+  formula_poly <- as.formula(paste(label_name, " ~ poly(", var_name, ", 2, raw = TRUE)"))
+  
+  
+  
+  model_regress <- lm(formula_regress, data = data)
+  model_regress_summary <- summary(model_regress)
+  r_regress_squared <- model_regress_summary$r.squared
+  
+  
+  
+  model_poly <- lm(formula_poly, data = data)
+  model_poly_summary <- summary(model_poly)
+  r_squared_poly <- model_poly_summary$r.squared
+  
+  
+  cart_model <- rpart(formula_cart, data = data, method = "anova", control = rpart.control(minsplit = 10, minbucket = 5) )
+  # minsplit: Minimum number of observations that must exist in a node in order for a split to be attempted.
+  # minbucket: Minimum number of observations in any terminal (leaf) node. This controls the complexity of the tree.
+  
+  # Assigner chaque observation à un nœud
+  data$node <- cart_model$where
+  
+  # Calculer la moyenne de chaque nœud
+  node_means <- aggregate(as.formula(paste(label_name, "~ node")), data = data, FUN = mean)
+  names(node_means)[2] <- "NodeMean"
+  
+  
+  # Fusionner les moyennes des nœuds avec les données d'origine
+  data <- merge(data, node_means, by = "node")
+  
+  # Créer des bar plots pour chaque nœud
+  plot1 <- ggplot(data, aes(x = as.factor(node), y = {{label}})) +
+    geom_bar(fill = "#219C90",
+             stat = "summary",
+             fun = "mean") +
+    stat_summary(
+      fun = "mean",
+      geom = "text",
+      aes(label = round(..y.., 2)),
+      vjust = -0.5,
+      color = "black"
+    ) +
+    labs(title = "",
+         x = "Nœud",
+         y = paste0("Moyenne de ", label_name)) +
+    custom_theme
+  
+  # Calculer les proportions pour chaque niveau de node
+  proportions <- prop.table(table(data$node)) * 100
+  
+  plot2 <- ggplot(data, aes(x = as.factor(node), y = {{label}})) +
+    geom_boxplot(fill = "#219C90") +
+    labs(title = "", x = "Nœud", y = label_name) + annotate(
+      "text",
+      x = as.factor(unique(data$node)),
+      y = rep(max(data[[label_name]]) + 1, length(unique(data$node))),
+      label = paste0(round(proportions, 1), "%"),
+      vjust = -0.5,
+      size = 4
+    )  + custom_theme
+  
+  # Afficher le R^2
+  sst <- sum((data[[label_name]] - mean(data[[label_name]])) ^ 2)
+  sse <- sum((data[[label_name]] - data$NodeMean) ^ 2)
+  r_squared <- 1 - (sse / sst)
+  
+  mat <- matrix(
+    c(
+      "regress",
+      "poly     ",
+      "CART  ",
+      round(r_regress_squared, 3),
+      round(r_squared_poly, 3),
+      round(r_squared, 3)
+    ),
+    nrow = 3,
+    byrow = FALSE
+  )
+  
+  # Convertir la matrice en une chaîne de caractères formatée pour afficher dans un sous-titre
+  subtitle_text <- paste("- ", apply(mat, 1, paste, collapse = "       "), collapse = "\n")
+  
+  mat2 <- matrix(
+    c(
+      paste0(strrep("*", 50)),
+      paste0(strrep("*", 40)),
+      paste0(strrep("*", 30)),
+      paste0(strrep("*", 20)),
+      paste0(strrep("*", 10)),
+      paste0(strrep("*", 5))
+    ),
+    nrow = 3,
+    byrow = FALSE
+  )
+  
+  cat(paste( mat2, collapse = "\n"))
+  
+  cat("            Si CART améliore le R2 \n")
+  
+  cat(paste0(strrep("*", 5)))
+  cat("            discretise la variable \n")  
+                                            
+  
+  
+  mat2 <- matrix(
+    c(
+      paste0(strrep("*", 5)),
+      paste0(strrep("*", 10)),
+      paste0(strrep("*", 20)),
+      paste0(strrep("*", 30)),
+      paste0(strrep("*", 40)),
+      paste0(strrep("*", 50))
+    ),
+    nrow = 3,
+    byrow = FALSE
+  )
+  
+  cat(paste( mat2, collapse = "\n"))
+  cat("\n")
+  cat("\n")
+  cat(subtitle_text)
+  
+  combined_plot <- plot1 + plot2 +
+    plot_layout(ncol = 2) +
+    plot_annotation(title = var_name, subtitle = "")
+  
+  a <- sort(as.data.frame(cart_model$splits)$index)
+  return(list(
+    cuts = a,
+    barplot = plot1,
+    boxplot = plot2
+  ))
+  
+}
+is_discretisable(train, LotArea, SalePrice)
+
