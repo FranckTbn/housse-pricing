@@ -126,7 +126,7 @@ train %>%
 
 ```
 
-- **Reading the text file line by line**
+-   **Reading the text file line by line**
 
 ```{r}
 lines <- readLines("data/data_description.txt")
@@ -134,7 +134,6 @@ cat(lines, sep = "\n")
 ```
 
 -   **79 variables explicatives**
-
 
 on regroupe les données de train et test pour éffectuer les mêmes modifications
 
@@ -157,7 +156,6 @@ la colonne `Id` n’est pas nécessaire pour la formation du modèle.
 data <- data %>% 
   select( -Id)
 ```
-
 
 ## exploration des données via l'application shiny
 
@@ -188,16 +186,13 @@ miss_data %>%
 
 gg_miss_var( train %>% select(missing$variables) )
 ```
+
 ## Remarque importantes après visualisation des données
-
-
 
 ```{r}
 #miss_plot <- DataExplorer::plot_missing(train)
 # miss_plot
 ```
-
-
 
 ```{r}
 #| layout-nrow: 2
@@ -214,7 +209,6 @@ vis_miss(train %>% select(missing$variables) ) +
 ```
 
 on observe que certaines variables ont des valeurs manquantes qui sont liées
-
 
 # Visualisation des données
 
@@ -348,9 +342,6 @@ var_quanti_viz_2(data = train, var = YearBuilt)
 ```{r}
 download.file("https://raw.githubusercontent.com/jfr...", "06-interactive-graphics-with-plotly.html")
 ```
-
-
-
 
 # métrique d'évaluation (modèle le plus simple)
 
@@ -531,9 +522,7 @@ L’algorithme est le suivant :
 
 K-fold cross-validation (CV) is a robust method for estimating the accuracy of a model.
 
-
 # Modèle linéaire
-
 
 ```{r}
 library(caret)
@@ -562,8 +551,8 @@ output <- data.frame(
 write.csv(output, file = "data.csv", row.names = FALSE)
 
 ```
-## glm
 
+## glm
 
 ```{r}
 
@@ -579,11 +568,10 @@ glm_model <- train(SalePrice ~ ., data = train, method = "glm", family = "gaussi
 
 print(glm_model)
 ```
+
 ```{r}
 plot( fitted(glm_model), residuals(glm_model) )
 ```
-
-
 
 Le réglage des hyperparamètres est une étape critique du machine learning. Il s’agit de trouver le meilleur ensemble d’hyperparamètres qui maximisent les performances du modèle.
 
@@ -672,11 +660,6 @@ mtcars_new <- data_edit(iris,
                         save_as = "mtcars_new.csv")
 ```
 
-
-
-
-
-
 ```{r}
 plot(model)
 ```
@@ -719,7 +702,6 @@ intervalle_confiance %>% gt_trabi()
 intervalle_confiance_GLM(model = model, confidence_level = 0.95)
 ```
 
-
 # Bagging et random forest
 
 ```{r}
@@ -727,7 +709,6 @@ result <- rforest(train, "SalePrice",  type = "regression", max.depth = 1)
 
 cv.rforest(result, mtry = 1:3, min.node.size = seq(1, 10, 5))
 ```
-
 
 ```{r}
 library(randomForest)

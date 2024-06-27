@@ -1,0 +1,4 @@
+ce fichier permet de stocker les différentes bases de données selon les étapes de nettoyage
+	- inputed_data
+	- non_corelated_data
+	- 

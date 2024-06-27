@@ -16,19 +16,147 @@ format: html
 filters:
   - webr
   - shinylive
+editor_options: 
+  chunk_output_type: inline
 ---
 
+```{r}
+visNetwork(nodes, edges) %>% visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE) %>% visInteraction(navigationButtons = TRUE)
+```
+
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(igraph)
+library(visNetwork)
+
+# Example data
+data <- mtcars  # Replace with your data
+threshold <- 0.5  # Replace with your threshold
+
+# Calculate correlation and adjacency matrices
+cor_matrix <- cor(data %>% dplyr::select(where(is.numeric)))
+adj_matrix <- abs(cor_matrix) > threshold
+diag(adj_matrix) <- 0
+
+# Create a graph from the adjacency matrix
+cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
+
+# Get the degree of each node
+node_degrees <- degree(cor_graph)
+
+# Create nodes data frame
+nodes <- data.frame(
+  id = V(cor_graph)$name,
+  label = V(cor_graph)$name,
+  group = ifelse(node_degrees > 1, "connected", "isolated"),  # Assign group based on degree
+  title = V(cor_graph)$name,
+  shape = "dot",
+  size = 10,
+  color = ifelse(node_degrees > 1, "red", NA)  # Color for connected nodes, default for isolated
+)
+
+# Create edges data frame
+edges <- data.frame(
+  from = as.character(ends(cor_graph, E(cor_graph))[,1]), 
+  to = as.character(ends(cor_graph, E(cor_graph))[,2]),
+  color = "grey",
+  width = 2
+)
+
+# Create the visNetwork visualization with customizations
+visNetwork(nodes, edges) %>%
+  visNodes(
+    shape = "dot",  # Node shape
+    scaling = list(min = 10, max = 30),  # Scaling size of nodes
+    font = list(size = 20, face = "Arial"),  # Font style
+    borderWidth = 2
+  ) %>%
+  visEdges(
+    color = list(color = "gray", highlight = "red"),  # Edge color
+    smooth = FALSE,  # Disable smooth edges
+    width = 2
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1),  # Highlight nearest nodes
+    nodesIdSelection = TRUE  # Enable node ID selection
+  ) %>%
+  visInteraction(
+    dragNodes = TRUE,  # Enable dragging of nodes
+    dragView = TRUE,  # Enable dragging of the view
+    zoomView = TRUE  # Enable zooming
+  ) %>%
+  visLayout(randomSeed = 42)  # Ensure consistent layout
+
+```
 
 
 ```{r}
-#| include: false
-#| file: fonctions.R
-#| label: setup
+# Load necessary libraries
+library(dplyr)
+library(igraph)
+library(visNetwork)
+
+# Example data
+data <- mtcars  # Replace with your data
+threshold <- 0.5  # Replace with your threshold
+
+# Calculate correlation and adjacency matrices
+cor_matrix <- cor(data %>% dplyr::select(where(is.numeric)))
+adj_matrix <- abs(cor_matrix) > threshold
+diag(adj_matrix) <- 0
+
+# Create a graph from the adjacency matrix
+cor_graph <- graph_from_adjacency_matrix(adj_matrix, mode = "undirected", diag = FALSE)
+
+# Convert igraph object to visNetwork-compatible format
+nodes <- data.frame(
+  id = V(cor_graph)$name,
+  label = V(cor_graph)$name,
+  group = sample(1:3, vcount(cor_graph), replace = TRUE),  # Example group assignment
+  title = V(cor_graph)$name,
+  color = sample(c("red", "green", "blue"), vcount(cor_graph), replace = TRUE),  # Example color
+  shape = "dot",
+  size = 10
+)
+
+edges <- data.frame(
+  from = as.character(ends(cor_graph, E(cor_graph))[,1]), 
+  to = as.character(ends(cor_graph, E(cor_graph))[,2]),
+  color = "grey",
+  width = 2
+)
+
+# Create the visNetwork visualization with customizations
+visNetwork(nodes, edges) %>%
+  visNodes(
+    shape = "dot",  # Node shape
+    scaling = list(min = 10, max = 30),  # Scaling size of nodes
+    font = list(size = 20, face = "Arial"),  # Font style
+    borderWidth = 2
+  ) %>%
+  visEdges(
+    color = list(color = "gray", highlight = "red"),  # Edge color
+    smooth = FALSE,  # Disable smooth edges
+    width = 2
+  ) %>%
+  visOptions(
+    highlightNearest = list(enabled = TRUE, degree = 1),  # Highlight nearest nodes
+    nodesIdSelection = TRUE  # Enable node ID selection
+  ) %>%
+  visInteraction(
+    dragNodes = TRUE,  # Enable dragging of nodes
+    dragView = TRUE,  # Enable dragging of the view
+    zoomView = TRUE  # Enable zooming
+  ) %>%
+  visLayout(randomSeed = 42)  # Ensure consistent layout
+
 ```
 
 # Importation des données
 
 ```{r}
+#| file: fonctions.R
 #| echo: true
 
 
@@ -50,12 +178,31 @@ b <- test %>%
 data <- bind_rows(a, b)
 ```
 
+utilisons DataExplorer pour rapidement explorer notre base de donnée,
+
+```{r}
+introduce(train)
+```
+
+```{r}
+#| eval: false
+create_report(
+  train,
+  output_format =rmarkdown::html_document(toc = TRUE, toc_depth = 6, theme = "yeti"),
+  output_file = "report.html",
+  output_dir = getwd(),
+  y = "SalePrice",
+  config = configure_report(),
+  report_title = "Data Profiling Report")
+```
+
+on remarque que que certaine section n'ont pas eté affichée à cause de la présence de valeur manquante.
+
 ```{r}
 data %>%
   slice_head(n = 12) %>%
   gt_trabi() %>%
   tab_source_note(md("Source : kaggle"))
-
 ```
 
 ```{r}
@@ -64,12 +211,12 @@ skimr::skim(data)
 ```
 
 ```{r}
+#| eval: false
+#| echo: false
 search_vars_bs4dash()
-```
-```{r}
+
 search_vars_bs4dash("main color")
 ```
-
 
 ```{r}
 #| echo: false
@@ -170,39 +317,33 @@ var_cible_quali_3(data = train, var = MSSubClass)
 var_cible_quali_2(data = train, var = MSSubClass)
 
 ```
-
 on remarque que lavariable *MSSubClass* permet de bien discriminer la vairiable *MSSubClass*
-
 ## exemple de Variables quantitatives(LotFrontage)
-
-
-
 ```{r}
 data %>% select(where(is.numeric)) %>% names()
 ```
 
-
-```{webr-r}
+```{r}
 summary(train$LotFrontage)
 ```
 
-```{webr-r}
+```{r}
 missing_viz_1(data = train, class = LotFrontage)
 ```
 
-```{webr-r}
+```{r}
 var_quanti_viz_1(data = train, LotFrontage)
 ```
 
-```{webr-r}
+```{r}
 var_quanti_viz_2(data = train, var = LotFrontage, adjust = 1)
 ```
 
-```{webr-r}
+```{r}
 var_quanti_viz_3(data = train, var = LotFrontage)
 ```
 
-```{webr-r}
+```{r}
 var_cible_quanti(data = train, var = LotFrontage)
 ```
 
@@ -251,12 +392,18 @@ indicateur(0.14736)
 ## trop de données manquantes
 
 ```{r}
+train <- data[1:nrow(train), ]
+train$SalePrice = label
+```
+
+```{r}
 #| layout-ncol: 2
 missing_viz_1(data, MiscVal)
 missing_viz_1(data, PoolArea)
 ```
 
 ```{r}
+#| eval: false
 data <- data %>% 
     dplyr::select( -c(MiscVal, PoolArea))
 ```
@@ -275,13 +422,110 @@ je les suprime car non pertinentes
 
 ```{r}
 var_cible_quali_1(train, Street, SalePrice)
-var_cible_quali_1(train, Utilities, SalePrice)
+var_cible_quali_2(train, Utilities, SalePrice)
 ```
 
 -   la colonne *Id* n’est pas nécessaire pour la formation du modèle.
 
 ```{r}
 data <- data %>%  dplyr::select( -c(Id) )
+```
+
+# Mosold YrSold
+
+```{r}
+levels_yr <- sort( unique(train["YrSold"] %>% pull()) )
+levels_m <- sort( unique(train["MoSold"] %>% pull() ) )
+
+train$YrSold <- as.factor(train$YrSold)
+train$MoSold <- as.factor(train$MoSold)
+
+train$YrSold <- factor(train$YrSold, levels = levels_yr)
+train$MoSold <- factor(train$MoSold, levels = levels_m)
+
+
+```
+
+```{r}
+var_cible_quali_1(train, MoSold, SalePrice)
+var_cible_quali_1(train, YrSold, SalePrice)
+```
+
+pas très significative
+
+```{r}
+train <- train %>% 
+  mutate(time = as.Date(paste0(YrSold, "-", MoSold, "-01"), format = "%Y-%m-%d"))  %>%
+  select(-c(YrSold, MoSold))
+
+sort( unique(train["time"] %>% pull()) )
+
+library(leaflet)
+navset_card_tab(
+  height = 450,
+  full_screen = TRUE,
+  title = "évolution du prix moyen des ventes au fill des mois depuis 2016",
+  nav_panel(
+    "Plotly",
+    card_title("A plotly plot"),
+    var_cible_quali_1(train, time, SalePrice)
+  ),
+  nav_panel(
+    "Leaflet",
+    card_title("A leaflet plot"),
+    var_cible_quali_1(train, time, SalePrice)
+  ),
+  nav_panel(
+    shiny::icon("circle-info"),
+    markdown("Learn more about [htmlwidgets](http://www.htmlwidgets.org/)")
+  )
+)
+
+
+```
+
+on a significativement augmenter la pertinence de la variable YrSold et MoSold en les combinants
+
+mais il y a trop de modalité
+
+essayons de les remplacer par une variable disrète de temps t corespondant au nombre de mois passés depuis la vente de la première maisons.
+
+```{r}
+reference_year <- as.numeric(format(min(train$time), "%Y"))
+reference_month <- as.numeric(format(min(train$time), "%m"))
+
+# Calculer la variable quantitative
+train$quantitative_dates <- (as.numeric(format(train$time, "%Y")) - reference_year) * 12 +
+  as.numeric(format(train$time, "%m")) - reference_month + 1
+
+train %>% count(time, quantitative_dates)
+
+
+```
+
+```{r}
+var_cible_quanti(train, quantitatives_dates)
+```
+
+## ancienneté absolue, ancienneté relative
+
+```{r}
+sort( unique(data["YearBuilt"] %>% pull()) )
+sort( unique(data["YearRemodAdd"] %>% pull() ) )
+```
+
+```{r}
+train <- train %>% mutate(abs_age =  interval(as.Date(YrSold), as.Date(YearBuilt)  ))
+
+
+var_cible_quali_1(train, YearBuilt, SalePrice)
+var_cible_quanti(train, YearBuilt)
+```
+
+```{r}
+var_cible_quali_1(train, YearRemodAdd, SalePrice)
+var_cible_quanti(train, YearRemodAdd)
+
 ```
 
 ## Convertir les variables à étiquettes en chaîne de charactère
@@ -299,8 +543,6 @@ data$HalfBath <- as.character(data$HalfBath)
 data$BedroomAbvGr <- as.character(data$BedroomAbvGr)
 data$KitchenAbvGr <- as.character(data$KitchenAbvGr)
 data$TotRmsAbvGrd <- as.character(data$TotRmsAbvGrd)
-data$MoSold <- as.character(data$MoSold)
-data$YrSold <- as.character(data$YrSold)
 ```
 
 ```         
@@ -506,13 +748,9 @@ sur les donnée de train, le rmse du modèles de reférence est : Puisque le pro
 
 on analyse les variables qui pourraient être transformée en variables binaires pour vérifer si cette transformation améliore ou réduit la variance
 
-
-
-
-:::callout-important
+::: callout-important
 Please switch `{{shinylive-r}}` to `{shinylive-r}`. We've suppressed this example from running by using `{{}}`.
 :::
-
 
 ```{r}
 a <- train %>%
@@ -744,6 +982,7 @@ data <- read.csv("inputed_data.csv", na.strings = "NA")
 ```{r}
 #data <- data.imp$ximp
 #sum(is.na(data))
+
 ```
 
 ```{r}
@@ -798,6 +1037,15 @@ Ce code permet de voir si c'est une bonne idée de discrétiser une variable ou 
 ```{r}
 train <- data[1:nrow(train), ]
 train$SalePrice = label
+
+create_report(
+  train,
+  output_format = html_document(toc = TRUE, toc_depth = 6, theme = "yeti"),
+  output_file = "report.html",
+  output_dir = getwd(),
+  y = "SalePrice",
+  config = configure_report(),
+  report_title = "Data Profiling Report")
 ```
 
 ## discrestisation par CART
@@ -822,6 +1070,7 @@ train <- merge(train, node_means, by = "node")
 ```{r}
 disc <- is_discretisable(train, LotArea, SalePrice)
 cuts <- sort(disc$cuts)
+
 cuts
 ```
 
@@ -837,10 +1086,20 @@ train$class <- cut(train$LotArea, breaks = c(-Inf, cuts, Inf), labels = interval
 
 train$class <- factor(train$class, levels = interval_labels)
 
-discretise <- function( data, var){
-  
+discretise <- function( data, var, cuts){
+  num_intervals <- length(cuts) + 1
+ 
+interval_labels <- paste0("class_", 1:num_intervals)
+
+train$class <- cut(train$LotArea, breaks = c(-Inf, cuts, Inf), labels = interval_labels)
+
+
+train$class <- factor(train$class, levels = interval_labels)
+
 }
 ```
+
+comparaison de LotArea discrétisé et LotArea continue
 
 ```{r}
 var_cible_quali_1(train, class, SalePrice)
@@ -849,3 +1108,20 @@ var_cible_quali_1(train, class, SalePrice)
 ```{r}
 var_cible_quanti(train, LotArea)
 ```
+
+# étudions l'effe de chaque variable qualitative sur le prix
+
+par le test ANOVA
+
+
+```{r}
+categorical_corelation(train)
+```
+
+
+
+
+
+
+
+

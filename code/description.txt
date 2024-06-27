@@ -1,0 +1,6 @@
+ce fichier permet de stocker les diférentes fonctions dont j'aurais besoins dans l'ensemble de projet
+	- Exploration              viz
+	- discretisation      algo|viz
+	- missing                 |viz
+	- ACP/ scalling       algo|viz
+	- model selection     algo

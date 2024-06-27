@@ -1,38 +1,13 @@
-library(shiny)
-# library(semantic.dashboard)
-library(bs4Dash)
-library(shinyWidgets)
-library(htmltools)
-library(shinyFeedback)
-library(shiny.fluent)
-library(shinyjs)
-library(shiny.semantic)
-library(shinycssloaders) # withspinner
-
-
-library(fresh)
-library(esquisse)
-library(htmlwidgets)
-library(waiter)
-library(bslib)
-
-
-library(dplyr)
-library(ggplot2)
-library(ggExtra)
-
-library(spsComps)
-library(mailtoR)
-
-library(DT)
 
 
 # Source the external R file
-source("fonctions.R")
 
-# search_vars_bs4dash()
+source("library.R")
+source("fonctions.R")
+source("data.R")
+
+# mytheme
 mytheme <- fresh::create_theme(
-  
   bs4dash_font(
     size_base = NULL,
     size_lg = NULL,
@@ -75,7 +50,7 @@ mytheme <- fresh::create_theme(
     navbar_light_toggler_icon_bg	=  "#00755c",
     navbar_light_toggler_border_color  = "#00755c"
     
-    )
+  )
   
   
   ,
@@ -89,7 +64,10 @@ mytheme <- fresh::create_theme(
     hover_color = "#FFF",
     submenu_color = "#FFF",
     submenu_hover_color = "#FFF"
-  ))
+  )
+)
+
+
 
 # simple_card
 simple_card <- function(title, width, content) {
@@ -106,9 +84,7 @@ simple_card <- function(title, width, content) {
 }
 
 
-# all  toasts options
-
-# use this list for all your toasts
+# toasts options
 myToastOptions <- list(
   positionClass = "toast-top-right",
   progressBar = FALSE,
@@ -131,7 +107,7 @@ myToastOptions <- list(
 
 
 
-# header----
+# header ----
 header = dashboardHeader(
   color = "lightblue",
   title = "Advanced Dashboard",
@@ -139,7 +115,7 @@ header = dashboardHeader(
   dropdownMenu(type = "notifications", taskItem("Project progress...", 50.777, color = "olive"))
 )
 
-# sidebar----
+# sidebar ----
 sidebar = bs4Dash::dashboardSidebar(
   size = "thin",
   color = "lightblue",
@@ -170,10 +146,7 @@ sidebar = bs4Dash::dashboardSidebar(
 
 
 # controlbar ----
-
 controlbar = dashboardControlbar()
-
-
 
 
 # footer ----
@@ -193,7 +166,8 @@ footer = dashboardFooter(
 body = dashboardBody(
   useShinyjs(),
   shinyFeedback::useShinyFeedback(feedback = FALSE),
-  use_theme(mytheme), # <-- use the theme
+  use_theme(mytheme),
+  # <-- use the theme
   tags$style(".akzf {
         font-size: 20px;
         font-weight: bold;
@@ -632,7 +606,7 @@ server <- function(input, output, session) {
   
   
   
-  #Create a reactive valcharacter.n_unique# 
+  #Create a reactive valcharacter.n_unique#
   #Create a reactive value to store the selected dataset
   selected_dataset <- reactive({
     if (input$dataset_switch) {
@@ -774,8 +748,10 @@ server <- function(input, output, session) {
           tabPanel("Graph c", withSpinner(plotOutput("plot_c")))
         )
       })
-    }else{
-      output$cat_distribution <- renderUI({NULL})
+    } else{
+      output$cat_distribution <- renderUI({
+        NULL
+      })
     }
     
     
@@ -805,8 +781,10 @@ server <- function(input, output, session) {
           tabPanel("Graph 3", withSpinner(plotOutput("plot_3")))
         )
       })
-    }else{
-      output$num_distribution <- renderUI({NULL})
+    } else{
+      output$num_distribution <- renderUI({
+        NULL
+      })
     }
     
     
@@ -921,8 +899,10 @@ server <- function(input, output, session) {
           tabPanel("Graph a", withSpinner(plotOutput("plot3")))
         )
       })
-    }else{
-      output$cat_link <- renderUI({NULL })
+    } else{
+      output$cat_link <- renderUI({
+        NULL
+      })
     }
     
     
@@ -1023,7 +1003,7 @@ server <- function(input, output, session) {
   
   
   # modale ----
-
+  
   dataModal <- function(failed = FALSE) {
     shiny::modalDialog(
       title = div(tags$b("Alert", style = "color: red;")),
@@ -1032,12 +1012,13 @@ server <- function(input, output, session) {
       p("vous pouvez maintenant visualiser vos graphiques."),
       br(),
       
-      span("Cette application est née de la nécessité de réduire la redondance de
+      span(
+        "Cette application est née de la nécessité de réduire la redondance de
       code lors de l'analyse des données dans les projets Kaggle. En participant
       à divers défis, j'ai constaté que les mêmes visualisations et analyses étaient
       souvent répétées, ce qui pouvait rendre le processus inefficace et chronophage.
 
-Afin de remédier à ce problème, j'ai développé cette application pour regrouper 
+Afin de remédier à ce problème, j'ai développé cette application pour regrouper
 toutes les visualisations couramment utilisées en un seul endroit. Elle offre une
 compréhension rapide et globale des données d'entraînement, facilitant ainsi l'analyse
 et l'exploration initiale des datasets.
@@ -1045,13 +1026,14 @@ et l'exploration initiale des datasets.
 L'application présente une variété de graphiques et de visualisations prédéfinis
 qui vous aideront à mieux comprendre vos données sans avoir à écrire du code répétitif.
 Cependant, je crois fermement en la collaboration et l'innovation communautaire.
-Si vous avez des idées de graphiques supplémentaires ou des méthodes particulières 
-pour visualiser vos données, je vous encourage vivement à les partager, accompagnées 
+Si vous avez des idées de graphiques supplémentaires ou des méthodes particulières
+pour visualiser vos données, je vous encourage vivement à les partager, accompagnées
 de votre code.
 
-Ensemble, nous pouvons améliorer cette application pour qu'elle devienne un outil 
+Ensemble, nous pouvons améliorer cette application pour qu'elle devienne un outil
            encore plus puissant et adaptable à différents besoins analytiques. Profitez
-           de cette plateforme pour explorer vos données de manière plus efficace et collaborative."),
+           de cette plateforme pour explorer vos données de manière plus efficace et collaborative."
+      ),
       textInput(
         "name",
         "Veuillez entrer votre nom",
@@ -1087,8 +1069,8 @@ Ensemble, nous pouvons améliorer cette application pour qu'elle devienne un out
   # remove the modal. If not show another modal, but this time with a failure
   # message.
   observe({
-      shiny::showModal(dataModal(failed = FALSE))
-   })
+    shiny::showModal(dataModal(failed = FALSE))
+  })
   
   
   # reset the loadingButton to its active state after 2 seconds
@@ -1103,7 +1085,7 @@ Ensemble, nous pouvons améliorer cette application pour qu'elle devienne un out
     if (is.null(input$uploadFile)) {
       showModal(dataModal(failed = TRUE))
       showToast(
-        "error", 
+        "error",
         "importez une base de donnée afin utiliser pleinement l'aplication" ,
         .options = myToastOptions
       )
@@ -1113,18 +1095,18 @@ Ensemble, nous pouvons améliorer cette application pour qu'elle devienne un out
   
   observeEvent(input$uploadFile, {
     if (!is.null(input$uploadFile)) {
-     
-      showToast(
-        "success", 
-        paste0("importation de", textOutput("file_path", inline = TRUE), " reussi"), 
-        .options = myToastOptions
-      )
+      showToast("success",
+                paste0(
+                  "importation de",
+                  textOutput("file_path", inline = TRUE),
+                  " reussi"
+                ),
+                .options = myToastOptions)
       
       shiny::removeModal()
     }
     
   })
-  #>>
   
 }
 
