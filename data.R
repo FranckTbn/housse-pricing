@@ -47,6 +47,7 @@ data$quantitative_dates <- (as.numeric(format(data$time, "%Y")) - reference_year
 data %>% count(time, quantitative_dates)
 
 
+data <- read.csv("inputed_data.csv", na.strings = "NA")
 
 
 #  train ready for model
